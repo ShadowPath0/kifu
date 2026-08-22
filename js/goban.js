@@ -35,7 +35,7 @@ class Goban {
     return { row, col };
   }
 
-  draw(stones, lastMove, markers, suggestions) {
+  draw(stones, lastMove, markers, suggestions, symbols) {
     const ctx = this.ctx;
     const s = this.canvasSize;
     ctx.clearRect(0, 0, s, s);
@@ -121,6 +121,52 @@ class Goban {
         ctx.fillText(pt.label, x, y - radius - 6);
       }
     }
+
+    // symboles libres façon OGS (triangle, carré, cercle, croix, lettre, chiffre)
+    const stoneAt = (row, col) => (stones || []).find((s) => s.row === row && s.col === col);
+    for (const sym of symbols || []) {
+      const [x, y] = this.posToPixel(sym.row, sym.col);
+      const occupying = stoneAt(sym.row, sym.col);
+      const color = occupying ? (occupying.color === "b" ? "#ffffff" : "#000000") : "#1d4ed8";
+      drawSymbol(ctx, sym.symbol, sym.label, x, y, radius, color);
+    }
+  }
+}
+
+function drawSymbol(ctx, symbol, label, cx, cy, radius, color) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2;
+  const r = radius * 0.62;
+  if (symbol === "triangle") {
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 3;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  } else if (symbol === "square") {
+    ctx.strokeRect(cx - r * 0.8, cy - r * 0.8, r * 1.6, r * 1.6);
+  } else if (symbol === "circle") {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.75, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (symbol === "cross") {
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.7, cy - r * 0.7);
+    ctx.lineTo(cx + r * 0.7, cy + r * 0.7);
+    ctx.moveTo(cx + r * 0.7, cy - r * 0.7);
+    ctx.lineTo(cx - r * 0.7, cy + r * 0.7);
+    ctx.stroke();
+  } else if (symbol === "letter" || symbol === "number") {
+    ctx.font = `bold ${Math.round(radius * 1.05)}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label || "", cx, cy + 1);
   }
 }
 

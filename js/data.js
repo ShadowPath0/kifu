@@ -1,4 +1,4 @@
-const BACKUP_COLLECTIONS = ["games", "categories", "errors", "rank_history"];
+const BACKUP_COLLECTIONS = ["games", "categories", "errors", "rank_history", "markers"];
 
 document.addEventListener("DOMContentLoaded", () => {
   renderNav("data");
@@ -67,6 +67,7 @@ async function importData() {
         categories: maxId(incoming.categories),
         errors: maxId(incoming.errors),
         rank_history: maxId(incoming.rank_history),
+        markers: maxId(incoming.markers),
       })
     );
   } else {
@@ -126,4 +127,12 @@ function mergeImport(incoming) {
     existingRankHistory.push({ ...h, id: nextId("rank_history"), game_id: newGameId });
   }
   saveCollection("rank_history", existingRankHistory);
+
+  const existingMarkers = loadCollection("markers");
+  for (const m of incoming.markers || []) {
+    const newGameId = gameIdMap.get(m.game_id);
+    if (newGameId === undefined) continue;
+    existingMarkers.push({ ...m, id: nextId("markers"), game_id: newGameId });
+  }
+  saveCollection("markers", existingMarkers);
 }

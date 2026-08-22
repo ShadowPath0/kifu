@@ -74,6 +74,19 @@
             <input id="ctl-jump" type="number" min="0" style="width:70px;" placeholder="coup n°" />
           </div>
           <div id="ctl-move-label" class="muted" style="margin-top:6px;">Coup 0 (position initiale)</div>
+
+          <div class="marker-toolbar">
+            <span class="muted" style="margin-right:4px;">Symboles :</span>
+            <button class="marker-btn" data-symbol="triangle" title="Triangle">△</button>
+            <button class="marker-btn" data-symbol="square" title="Carré">□</button>
+            <button class="marker-btn" data-symbol="circle" title="Cercle">○</button>
+            <button class="marker-btn" data-symbol="cross" title="Croix">✕</button>
+            <button class="marker-btn" data-symbol="letter" title="Lettre (A, B, C...)">Abc</button>
+            <button class="marker-btn" data-symbol="number" title="Chiffre (1, 2, 3...)">123</button>
+            <button class="marker-btn" data-symbol="erase" title="Effacer un symbole">⌫</button>
+            <span id="marker-active-label" class="muted"></span>
+          </div>
+
           <div class="modal-actions" style="justify-content:flex-start;">
             <button class="primary" id="annotate-btn">Marquer une erreur sur ce coup</button>
           </div>
@@ -141,10 +154,10 @@
     </div>
   </div>
 
-  <script src="js/sgf.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/nav.js"></script>
-  <script src="js/goban.js"></script>
-  <script src="js/game.js"></script>
+  <script src="js/sgf.js?v=2"></script>
+  <script src="js/api.js?v=2"></script>
+  <script src="js/nav.js?v=2"></script>
+  <script src="js/goban.js?v=2"></script>
+  <script src="js/game.js?v=2"></script>
 </body>
 </html>

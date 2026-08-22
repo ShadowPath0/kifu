@@ -6,6 +6,18 @@ let currentMoveIndex = 0;
 let pendingSuggestedMoves = [];
 let pickingMode = false;
 let editingErrorId = null;
+let markers = [];
+let markerTool = null;
+
+const MARKER_TOOL_LABEL = {
+  triangle: "Triangle",
+  square: "Carré",
+  circle: "Cercle",
+  cross: "Croix",
+  letter: "Lettre",
+  number: "Chiffre",
+  erase: "Effacer",
+};
 
 const COL_LETTERS = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
 function formatCoord(row, col) {
@@ -39,6 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (game.sgf_content) {
     try {
       boardData = await api.getBoardStates(gameId);
+      markers = await api.listMarkers(gameId);
       document.getElementById("goban-section").classList.remove("hidden");
       goban = new Goban(document.getElementById("goban-canvas"), boardData.size);
       setupBoardControls();
@@ -172,6 +185,8 @@ function setupBoardControls() {
   document.getElementById("goban-canvas").addEventListener("click", (e) => {
     if (pickingMode) {
       togglePickedPoint(e);
+    } else if (markerTool) {
+      handleMarkerClick(e);
     } else {
       openAnnotateModal(currentMoveIndex);
     }
@@ -179,6 +194,43 @@ function setupBoardControls() {
   document.getElementById("annotate-btn").addEventListener("click", () => openAnnotateModal(currentMoveIndex));
   document.getElementById("am-pick-suggestions-btn").addEventListener("click", startPickingSuggestions);
   document.getElementById("picking-done-btn").addEventListener("click", finishPickingSuggestions);
+
+  document.querySelectorAll(".marker-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      markerTool = markerTool === btn.dataset.symbol ? null : btn.dataset.symbol;
+      updateMarkerToolbarUI();
+    });
+  });
+}
+
+function updateMarkerToolbarUI() {
+  document.querySelectorAll(".marker-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.symbol === markerTool);
+  });
+  document.getElementById("marker-active-label").textContent = markerTool
+    ? `Cliquez sur le plateau : ${MARKER_TOOL_LABEL[markerTool]}`
+    : "";
+}
+
+function errorRingMarkers(i) {
+  return errors
+    .filter((e) => e.move_number > 0 && e.move_number <= i)
+    .map((e) => {
+      const mv = boardData.moves[e.move_number];
+      if (!mv || mv.pass) return null;
+      return { row: mv.row, col: mv.col, color: e.category.color, severity: e.severity };
+    })
+    .filter(Boolean);
+}
+
+function suggestionMarkersFor(i) {
+  return errors
+    .filter((e) => e.move_number > 0 && e.move_number <= i)
+    .flatMap((e) => (e.suggested_moves || []).map((p) => ({ row: p.row, col: p.col, label: formatCoord(p.row, p.col) })));
+}
+
+function symbolMarkersFor(i) {
+  return markers.filter((m) => m.move_number === i);
 }
 
 function setMoveIndex(i) {
@@ -188,20 +240,40 @@ function setMoveIndex(i) {
   document.getElementById("ctl-move-label").textContent =
     i === 0 ? "Coup 0 (position initiale)" : `Coup ${i} — ${move.color === "b" ? "Noir" : "Blanc"}${move.pass ? " (passe)" : ""}`;
 
-  const visibleErrors = errors.filter((e) => e.move_number > 0 && e.move_number <= i);
-  const markers = visibleErrors
-    .map((e) => {
-      const mv = boardData.moves[e.move_number];
-      if (!mv || mv.pass) return null;
-      return { row: mv.row, col: mv.col, color: e.category.color, severity: e.severity };
-    })
-    .filter(Boolean);
-  const suggestions = visibleErrors.flatMap((e) =>
-    (e.suggested_moves || []).map((p) => ({ row: p.row, col: p.col, label: formatCoord(p.row, p.col) }))
-  );
-
-  goban.draw(boardData.states[i], move, markers, suggestions);
+  goban.draw(boardData.states[i], move, errorRingMarkers(i), suggestionMarkersFor(i), symbolMarkersFor(i));
   renderErrorList();
+}
+
+// ---------- symboles libres (façon OGS) ----------
+
+async function handleMarkerClick(clickEvent) {
+  const pos = goban.pixelToPos(clickEvent.offsetX, clickEvent.offsetY);
+  if (!pos) return;
+  const i = currentMoveIndex;
+  const existing = markers.find((m) => m.move_number === i && m.row === pos.row && m.col === pos.col);
+
+  if (existing) {
+    await api.deleteMarker(existing.id);
+    markers = markers.filter((m) => m.id !== existing.id);
+    if (markerTool === "erase" || existing.symbol === markerTool) {
+      setMoveIndex(i);
+      return;
+    }
+  } else if (markerTool === "erase") {
+    return;
+  }
+
+  let label = null;
+  if (markerTool === "letter") {
+    const count = markers.filter((m) => m.move_number === i && m.symbol === "letter").length;
+    label = String.fromCharCode(65 + (count % 26));
+  } else if (markerTool === "number") {
+    const count = markers.filter((m) => m.move_number === i && m.symbol === "number").length;
+    label = String(count + 1);
+  }
+  const created = await api.createMarker(gameId, { move_number: i, row: pos.row, col: pos.col, symbol: markerTool, label });
+  markers.push(created);
+  setMoveIndex(i);
 }
 
 // ---------- coup(s) recommandé(s) : sélection sur le plateau ----------
@@ -209,6 +281,8 @@ function setMoveIndex(i) {
 function startPickingSuggestions() {
   closeAnnotateModal();
   pickingMode = true;
+  markerTool = null;
+  updateMarkerToolbarUI();
   document.getElementById("picking-banner").classList.remove("hidden");
   renderPickingBoard();
 }
@@ -223,19 +297,7 @@ function finishPickingSuggestions() {
 
 function lastNormalDrawArgs() {
   const i = currentMoveIndex;
-  const move = boardData.moves[i];
-  const visibleErrors = errors.filter((e) => e.move_number > 0 && e.move_number <= i);
-  const markers = visibleErrors
-    .map((e) => {
-      const mv = boardData.moves[e.move_number];
-      if (!mv || mv.pass) return null;
-      return { row: mv.row, col: mv.col, color: e.category.color, severity: e.severity };
-    })
-    .filter(Boolean);
-  const suggestions = visibleErrors.flatMap((e) =>
-    (e.suggested_moves || []).map((p) => ({ row: p.row, col: p.col, label: formatCoord(p.row, p.col) }))
-  );
-  return [boardData.states[i], move, markers, suggestions];
+  return [boardData.states[i], boardData.moves[i], errorRingMarkers(i), suggestionMarkersFor(i), symbolMarkersFor(i)];
 }
 
 function pickingMoveNumber() {

@@ -197,6 +197,10 @@ const api = {
       "rank_history",
       loadCollection("rank_history").filter((h) => h.game_id !== numId)
     );
+    saveCollection(
+      "markers",
+      loadCollection("markers").filter((m) => m.game_id !== numId)
+    );
   },
 
   async parseSgf(sgf_content) {
@@ -303,6 +307,37 @@ const api = {
     saveCollection(
       "errors",
       loadCollection("errors").filter((e) => e.id !== numId)
+    );
+  },
+
+  // marqueurs de plateau (symboles libres façon OGS, indépendants des erreurs)
+  async listMarkers(gameId) {
+    const numId = Number(gameId);
+    return loadCollection("markers").filter((m) => m.game_id === numId);
+  },
+
+  async createMarker(gameId, payload) {
+    const numGameId = Number(gameId);
+    const markers = loadCollection("markers");
+    const marker = {
+      id: nextId("markers"),
+      game_id: numGameId,
+      move_number: payload.move_number,
+      row: payload.row,
+      col: payload.col,
+      symbol: payload.symbol,
+      label: payload.label || null,
+    };
+    markers.push(marker);
+    saveCollection("markers", markers);
+    return marker;
+  },
+
+  async deleteMarker(id) {
+    const numId = Number(id);
+    saveCollection(
+      "markers",
+      loadCollection("markers").filter((m) => m.id !== numId)
     );
   },
 

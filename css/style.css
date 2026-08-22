@@ -491,6 +491,29 @@ tbody tr {
   cursor: pointer;
 }
 
+/* --- Marker toolbar (symboles OGS) --- */
+
+.marker-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.marker-btn {
+  padding: 6px 10px;
+  font-size: 1rem;
+  line-height: 1;
+  min-width: 36px;
+}
+
+.marker-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 /* --- Heatmap --- */
 
 .heatmap-table {

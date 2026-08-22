@@ -28,11 +28,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderNav("games");
   const params = new URLSearchParams(window.location.search);
   gameId = params.get("id");
-  if (!gameId) {
-    document.body.innerHTML = "<main><p>Aucune partie spécifiée.</p></main>";
-    return;
-  }
+  const roomCode = params.get("room");
 
+  document.getElementById("am-cancel").addEventListener("click", closeAnnotateModal);
+  document.getElementById("am-save").addEventListener("click", saveAnnotation);
+  document.getElementById("room-leave-btn").addEventListener("click", leaveRoom);
+  document.getElementById("room-copy-btn").addEventListener("click", copyRoomLink);
+  document.getElementById("room-modal-close-btn").addEventListener("click", () =>
+    document.getElementById("room-share-modal").classList.add("hidden")
+  );
+  wireRoomHandlers();
+
+  if (gameId) {
+    await loadOwnedGame();
+    document.getElementById("share-room-btn").addEventListener("click", createRoomFlow);
+    if (roomCode) await hostExistingRoom(roomCode);
+  } else if (roomCode) {
+    enterGuestMode(roomCode);
+  } else {
+    document.body.innerHTML = "<main><p>Aucune partie spécifiée.</p></main>";
+  }
+});
+
+async function loadOwnedGame() {
   try {
     [game, categories] = await Promise.all([api.getGame(gameId), api.listCategories()]);
   } catch (err) {
@@ -45,14 +63,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupMetaEdit();
   setupComment();
   populateCategorySelect();
-  document.getElementById("am-cancel").addEventListener("click", closeAnnotateModal);
-  document.getElementById("am-save").addEventListener("click", saveAnnotation);
 
   if (game.sgf_content) {
     try {
       boardData = await api.getBoardStates(gameId);
       markers = await api.listMarkers(gameId);
       document.getElementById("goban-section").classList.remove("hidden");
+      document.getElementById("share-room-btn").classList.remove("hidden");
       goban = new Goban(document.getElementById("goban-canvas"), boardData.size);
       setupBoardControls();
       setMoveIndex(boardData.states.length - 1);
@@ -68,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   document.getElementById("meta-delete-btn").addEventListener("click", deleteGame);
-});
+}
 
 // ---------- meta ----------
 
@@ -162,8 +179,239 @@ function populateCategorySelect() {
   sel.innerHTML = categories.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
 }
 
-function categoryById(id) {
-  return categories.find((c) => c.id === id);
+// ---------- salle de review partagée ----------
+
+function guardController() {
+  if (Room.active && !Room.isController()) {
+    showToast("Vous n'avez pas le contrôle de la review.", true);
+    return false;
+  }
+  return true;
+}
+
+async function createRoomFlow() {
+  const btn = document.getElementById("share-room-btn");
+  btn.disabled = true;
+  try {
+    const code = Room.randomCode();
+    await Room.connect(code, "Hôte");
+    Room.isOwner = true;
+    Room.setController(Room.participantId);
+    history.replaceState(null, "", `game.html?id=${gameId}&room=${code}`);
+    const url = `${location.origin}${location.pathname}?room=${code}`;
+    document.getElementById("room-link-input").value = url;
+    document.getElementById("room-share-modal").classList.remove("hidden");
+    document.getElementById("room-banner").classList.remove("hidden");
+    updateRoomUI();
+  } catch (err) {
+    showToast("Impossible de créer la salle : " + err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function hostExistingRoom(code) {
+  try {
+    await Room.connect(code, "Hôte");
+    Room.isOwner = true;
+    Room.setController(Room.participantId);
+    document.getElementById("room-banner").classList.remove("hidden");
+    updateRoomUI();
+  } catch (err) {
+    showToast("Reconnexion à la salle impossible : " + err.message, true);
+  }
+}
+
+function copyRoomLink() {
+  const input = document.getElementById("room-link-input");
+  input.select();
+  navigator.clipboard?.writeText(input.value).then(
+    () => showToast("Lien copié"),
+    () => showToast("Copie impossible, sélectionnez et copiez manuellement", true)
+  );
+}
+
+function enterGuestMode(code) {
+  document.getElementById("meta-panel").classList.add("hidden");
+  document.getElementById("board-panel").classList.add("hidden");
+  document.getElementById("guest-join-panel").classList.remove("hidden");
+  document.getElementById("guest-join-btn").addEventListener("click", async () => {
+    const name = document.getElementById("guest-name-input").value.trim() || "Invité";
+    document.getElementById("guest-join-panel").classList.add("hidden");
+    document.getElementById("guest-waiting").classList.remove("hidden");
+    try {
+      await Room.connect(code, name);
+      Room.send("snapshot-request", {});
+    } catch (err) {
+      document.getElementById("guest-waiting").textContent = "Erreur : " + err.message;
+    }
+  });
+}
+
+function applySnapshot(data) {
+  game = data.game;
+  categories = data.categories;
+  errors = game.errors || [];
+  markers = data.markers || [];
+  Room.setController(data.controllerId);
+
+  document.getElementById("guest-waiting").classList.add("hidden");
+  document.getElementById("meta-panel").classList.remove("hidden");
+  document.getElementById("board-panel").classList.remove("hidden");
+  document.getElementById("room-banner").classList.remove("hidden");
+  document.getElementById("meta-edit-btn").classList.add("hidden");
+  document.getElementById("meta-delete-btn").classList.add("hidden");
+  document.getElementById("comment-save-btn").classList.add("hidden");
+  document.getElementById("comment-text").disabled = true;
+
+  renderMeta();
+  populateCategorySelect();
+
+  if (game.sgf_content) {
+    boardData = computeBoardStates(game.sgf_content);
+    document.getElementById("goban-section").classList.remove("hidden");
+    goban = new Goban(document.getElementById("goban-canvas"), boardData.size);
+    setupBoardControls();
+    setMoveIndex(data.currentMoveIndex);
+  } else {
+    document.getElementById("no-sgf-msg").classList.remove("hidden");
+    setupManualErrors();
+  }
+  updateRoomUI();
+}
+
+function buildSnapshot() {
+  return {
+    game,
+    categories,
+    markers,
+    currentMoveIndex,
+    controllerId: Room.controllerId,
+  };
+}
+
+function updateRoomUI() {
+  const isController = Room.isController();
+  document.getElementById("room-status").textContent = Room.active
+    ? isController
+      ? " — vous avez le contrôle"
+      : " — vous regardez"
+    : "";
+  document
+    .querySelectorAll("#ctl-first,#ctl-prev,#ctl-next,#ctl-last,#ctl-slider,#ctl-jump,#annotate-btn,.marker-btn")
+    .forEach((el) => {
+      if (Room.active) el.disabled = !isController;
+      else el.disabled = false;
+    });
+}
+
+function renderParticipants(list) {
+  const el = document.getElementById("room-participants");
+  el.innerHTML = list
+    .map((p) => {
+      const isCtrl = p.id === Room.controllerId;
+      const canHandOff = Room.isController() && p.id !== Room.participantId;
+      return `
+        <div class="participant-row">
+          <span>${escapeHtml(p.name)}${p.id === Room.participantId ? " (vous)" : ""}</span>
+          ${isCtrl ? '<span class="badge-controller">CONTRÔLE</span>' : ""}
+          ${canHandOff ? `<button data-handoff="${escapeHtml(p.id)}">Donner le contrôle</button>` : ""}
+        </div>`;
+    })
+    .join("");
+  el.querySelectorAll("button[data-handoff]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const newControllerId = btn.dataset.handoff;
+      Room.setController(newControllerId);
+      Room.send("control-transfer", { newControllerId });
+      updateRoomUI();
+    });
+  });
+}
+
+function leaveRoom() {
+  Room.leave();
+  document.getElementById("room-banner").classList.add("hidden");
+  updateRoomUI();
+  showToast("Vous avez quitté la salle");
+}
+
+function wireRoomHandlers() {
+  Room.on("snapshot-request", () => {
+    if (Room.isOwner) Room.send("snapshot", buildSnapshot());
+  });
+  Room.on("snapshot", applySnapshot);
+
+  Room.on("sync:move", ({ moveIndex }) => setMoveIndex(moveIndex));
+
+  Room.on("intent:create-error", async (payload) => {
+    if (!Room.isOwner) return;
+    const created = await api.createGameError(gameId, payload);
+    errors.push(created);
+    setMoveIndex(currentMoveIndex);
+    Room.send("sync:error-created", { error: created });
+  });
+  Room.on("sync:error-created", ({ error }) => {
+    if (!errors.some((e) => e.id === error.id)) errors.push(error);
+    setMoveIndex(currentMoveIndex);
+  });
+
+  Room.on("intent:update-error", async ({ id, payload }) => {
+    if (!Room.isOwner) return;
+    const updated = await api.updateGameError(id, payload);
+    const idx = errors.findIndex((e) => e.id === id);
+    if (idx !== -1) errors[idx] = updated;
+    setMoveIndex(currentMoveIndex);
+    Room.send("sync:error-updated", { error: updated });
+  });
+  Room.on("sync:error-updated", ({ error }) => {
+    const idx = errors.findIndex((e) => e.id === error.id);
+    if (idx !== -1) errors[idx] = error;
+    setMoveIndex(currentMoveIndex);
+  });
+
+  Room.on("intent:delete-error", async ({ id }) => {
+    if (!Room.isOwner) return;
+    await api.deleteGameError(id);
+    errors = errors.filter((e) => e.id !== id);
+    setMoveIndex(currentMoveIndex);
+    Room.send("sync:error-deleted", { id });
+  });
+  Room.on("sync:error-deleted", ({ id }) => {
+    errors = errors.filter((e) => e.id !== id);
+    setMoveIndex(currentMoveIndex);
+  });
+
+  Room.on("intent:create-marker", async (payload) => {
+    if (!Room.isOwner) return;
+    const created = await api.createMarker(gameId, payload);
+    markers.push(created);
+    setMoveIndex(currentMoveIndex);
+    Room.send("sync:marker-created", { marker: created });
+  });
+  Room.on("sync:marker-created", ({ marker }) => {
+    if (!markers.some((m) => m.id === marker.id)) markers.push(marker);
+    setMoveIndex(currentMoveIndex);
+  });
+
+  Room.on("intent:delete-marker", async ({ id }) => {
+    if (!Room.isOwner) return;
+    await api.deleteMarker(id);
+    markers = markers.filter((m) => m.id !== id);
+    setMoveIndex(currentMoveIndex);
+    Room.send("sync:marker-deleted", { id });
+  });
+  Room.on("sync:marker-deleted", ({ id }) => {
+    markers = markers.filter((m) => m.id !== id);
+    setMoveIndex(currentMoveIndex);
+  });
+
+  Room.on("control-transfer", ({ newControllerId }) => {
+    Room.setController(newControllerId);
+    updateRoomUI();
+  });
+
+  Room.on("participants", renderParticipants);
 }
 
 // ---------- board / goban ----------
@@ -171,18 +419,19 @@ function categoryById(id) {
 function setupBoardControls() {
   const slider = document.getElementById("ctl-slider");
   slider.max = boardData.states.length - 1;
-  slider.addEventListener("input", () => setMoveIndex(parseInt(slider.value, 10)));
-  document.getElementById("ctl-first").addEventListener("click", () => setMoveIndex(0));
-  document.getElementById("ctl-prev").addEventListener("click", () => setMoveIndex(Math.max(0, currentMoveIndex - 1)));
-  document.getElementById("ctl-next").addEventListener("click", () =>
-    setMoveIndex(Math.min(boardData.states.length - 1, currentMoveIndex + 1))
-  );
-  document.getElementById("ctl-last").addEventListener("click", () => setMoveIndex(boardData.states.length - 1));
+  slider.addEventListener("input", () => navigateTo(parseInt(slider.value, 10)));
+  document.getElementById("ctl-first").addEventListener("click", () => navigateTo(0));
+  document.getElementById("ctl-prev").addEventListener("click", () => navigateTo(Math.max(0, currentMoveIndex - 1)));
+  document
+    .getElementById("ctl-next")
+    .addEventListener("click", () => navigateTo(Math.min(boardData.states.length - 1, currentMoveIndex + 1)));
+  document.getElementById("ctl-last").addEventListener("click", () => navigateTo(boardData.states.length - 1));
   document.getElementById("ctl-jump").addEventListener("change", (e) => {
     const n = parseInt(e.target.value, 10);
-    if (!isNaN(n)) setMoveIndex(Math.max(0, Math.min(boardData.states.length - 1, n)));
+    if (!isNaN(n)) navigateTo(Math.max(0, Math.min(boardData.states.length - 1, n)));
   });
   document.getElementById("goban-canvas").addEventListener("click", (e) => {
+    if (!guardController()) return;
     if (pickingMode) {
       togglePickedPoint(e);
     } else if (markerTool) {
@@ -191,16 +440,29 @@ function setupBoardControls() {
       openAnnotateModal(currentMoveIndex);
     }
   });
-  document.getElementById("annotate-btn").addEventListener("click", () => openAnnotateModal(currentMoveIndex));
+  document.getElementById("annotate-btn").addEventListener("click", () => {
+    if (!guardController()) return;
+    openAnnotateModal(currentMoveIndex);
+  });
   document.getElementById("am-pick-suggestions-btn").addEventListener("click", startPickingSuggestions);
   document.getElementById("picking-done-btn").addEventListener("click", finishPickingSuggestions);
 
   document.querySelectorAll(".marker-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (!guardController()) return;
       markerTool = markerTool === btn.dataset.symbol ? null : btn.dataset.symbol;
       updateMarkerToolbarUI();
     });
   });
+}
+
+function navigateTo(i) {
+  if (!guardController()) {
+    document.getElementById("ctl-slider").value = currentMoveIndex;
+    return;
+  }
+  setMoveIndex(i);
+  if (Room.active) Room.send("sync:move", { moveIndex: i });
 }
 
 function updateMarkerToolbarUI() {
@@ -246,6 +508,26 @@ function setMoveIndex(i) {
 
 // ---------- symboles libres (façon OGS) ----------
 
+async function performCreateMarker(payload) {
+  if (Room.active && !Room.isOwner) {
+    Room.send("intent:create-marker", payload);
+    return;
+  }
+  const created = await api.createMarker(gameId, payload);
+  markers.push(created);
+  if (Room.active) Room.send("sync:marker-created", { marker: created });
+}
+
+async function performDeleteMarker(id) {
+  if (Room.active && !Room.isOwner) {
+    Room.send("intent:delete-marker", { id });
+    return;
+  }
+  await api.deleteMarker(id);
+  markers = markers.filter((m) => m.id !== id);
+  if (Room.active) Room.send("sync:marker-deleted", { id });
+}
+
 async function handleMarkerClick(clickEvent) {
   const pos = goban.pixelToPos(clickEvent.offsetX, clickEvent.offsetY);
   if (!pos) return;
@@ -253,8 +535,7 @@ async function handleMarkerClick(clickEvent) {
   const existing = markers.find((m) => m.move_number === i && m.row === pos.row && m.col === pos.col);
 
   if (existing) {
-    await api.deleteMarker(existing.id);
-    markers = markers.filter((m) => m.id !== existing.id);
+    await performDeleteMarker(existing.id);
     if (markerTool === "erase" || existing.symbol === markerTool) {
       setMoveIndex(i);
       return;
@@ -271,14 +552,14 @@ async function handleMarkerClick(clickEvent) {
     const count = markers.filter((m) => m.move_number === i && m.symbol === "number").length;
     label = String(count + 1);
   }
-  const created = await api.createMarker(gameId, { move_number: i, row: pos.row, col: pos.col, symbol: markerTool, label });
-  markers.push(created);
+  await performCreateMarker({ move_number: i, row: pos.row, col: pos.col, symbol: markerTool, label });
   setMoveIndex(i);
 }
 
 // ---------- coup(s) recommandé(s) : sélection sur le plateau ----------
 
 function startPickingSuggestions() {
+  if (!guardController()) return;
   closeAnnotateModal();
   pickingMode = true;
   markerTool = null;
@@ -357,6 +638,7 @@ function openAnnotateModal(moveNumber) {
 }
 
 function openEditAnnotateModal(error) {
+  if (!guardController()) return;
   editingErrorId = error.id;
   document.getElementById("am-title").textContent = "Modifier l'annotation";
   document.getElementById("am-move-no").textContent = error.move_number;
@@ -388,13 +670,23 @@ async function saveAnnotation() {
   };
   const wasEditing = !!editingErrorId;
   try {
+    if (Room.active && !Room.isOwner) {
+      Room.send(wasEditing ? "intent:update-error" : "intent:create-error", wasEditing ? { id: editingErrorId, payload } : payload);
+      closeAnnotateModal();
+      pendingSuggestedMoves = [];
+      editingErrorId = null;
+      showToast("Envoyé à l'hôte…");
+      return;
+    }
     if (wasEditing) {
       const updated = await api.updateGameError(editingErrorId, payload);
       const idx = errors.findIndex((e) => e.id === editingErrorId);
       if (idx !== -1) errors[idx] = updated;
+      if (Room.active) Room.send("sync:error-updated", { error: updated });
     } else {
       const created = await api.createGameError(gameId, payload);
       errors.push(created);
+      if (Room.active) Room.send("sync:error-created", { error: created });
     }
     closeAnnotateModal();
     pendingSuggestedMoves = [];
@@ -408,10 +700,16 @@ async function saveAnnotation() {
 }
 
 async function deleteAnnotation(id) {
+  if (!guardController()) return;
   if (!confirm("Supprimer cette annotation ?")) return;
   try {
-    await api.deleteGameError(id);
-    errors = errors.filter((e) => e.id !== id);
+    if (Room.active && !Room.isOwner) {
+      Room.send("intent:delete-error", { id });
+    } else {
+      await api.deleteGameError(id);
+      errors = errors.filter((e) => e.id !== id);
+      if (Room.active) Room.send("sync:error-deleted", { id });
+    }
     if (boardData) setMoveIndex(currentMoveIndex);
     else renderManualErrorList();
     showToast("Annotation supprimée");
@@ -444,7 +742,7 @@ function wireErrorItemButtons(el, { withJump } = {}) {
     el.querySelectorAll(".error-item").forEach((item) => {
       item.addEventListener("click", (e) => {
         if (e.target.closest("button")) return;
-        setMoveIndex(parseInt(item.dataset.move, 10));
+        navigateTo(parseInt(item.dataset.move, 10));
       });
     });
   }
@@ -477,6 +775,7 @@ function renderErrorList() {
 function setupManualErrors() {
   document.getElementById("manual-error-section").classList.remove("hidden");
   document.getElementById("annotate-manual-btn").addEventListener("click", () => {
+    if (!guardController()) return;
     const n = parseInt(document.getElementById("manual-move-number").value, 10) || 0;
     openAnnotateModal(n);
   });

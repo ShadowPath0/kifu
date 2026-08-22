@@ -9,6 +9,29 @@
 <body>
   <div id="nav-root"></div>
   <main>
+    <div class="panel hidden" id="guest-join-panel">
+      <h2>Rejoindre la salle de review</h2>
+      <p class="muted">Vous avez été invité·e à regarder une review en direct. Les données restent chez l'hôte — rien n'est enregistré sur cet appareil.</p>
+      <label>Votre nom (affiché aux autres participants)</label>
+      <input id="guest-name-input" type="text" placeholder="ex : Alex" />
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="primary" id="guest-join-btn">Rejoindre</button>
+      </div>
+    </div>
+
+    <div class="panel hidden" id="guest-waiting">Connexion à la salle…</div>
+
+    <div class="panel room-banner hidden" id="room-banner">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div>
+          <strong>🔴 Review en direct</strong>
+          <span id="room-status" class="muted"></span>
+        </div>
+        <button id="room-leave-btn">Quitter la salle</button>
+      </div>
+      <div id="room-participants" style="margin-top:10px;"></div>
+    </div>
+
     <div class="panel" id="meta-panel">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
         <div style="flex:1;">
@@ -17,6 +40,7 @@
           <div id="meta-external" style="margin-top:6px;"></div>
         </div>
         <div style="display:flex;gap:8px;">
+          <button id="share-room-btn" class="hidden">🔴 Partager en review</button>
           <button id="meta-edit-btn">Modifier</button>
           <button id="meta-delete-btn" class="danger">Supprimer</button>
         </div>
@@ -154,10 +178,23 @@
     </div>
   </div>
 
+  <div id="room-share-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2>Salle de review créée</h2>
+      <p class="muted">Partagez ce lien — la première personne qui l'ouvre en tant qu'invité pourra suivre la review en direct. Vous gardez le contrôle sauf si vous le donnez.</p>
+      <input id="room-link-input" type="text" readonly />
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="primary" id="room-copy-btn">Copier le lien</button>
+        <button id="room-modal-close-btn">Fermer</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/sgf.js?v=2"></script>
   <script src="js/api.js?v=2"></script>
   <script src="js/nav.js?v=2"></script>
   <script src="js/goban.js?v=2"></script>
+  <script src="js/room.js?v=2"></script>
   <script src="js/game.js?v=2"></script>
 </body>
 </html>

@@ -514,6 +514,35 @@ tbody tr {
   color: white;
 }
 
+/* --- Salle de review partagée --- */
+
+.room-banner {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.participant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 0.88rem;
+}
+
+.participant-row .badge-controller {
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.participant-row button {
+  padding: 3px 10px;
+  font-size: 0.78rem;
+}
+
 /* --- Heatmap --- */
 
 .heatmap-table {

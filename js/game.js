@@ -476,7 +476,7 @@ function updateMarkerToolbarUI() {
 
 function errorRingMarkers(i) {
   return errors
-    .filter((e) => e.move_number > 0 && e.move_number <= i)
+    .filter((e) => e.move_number === i)
     .map((e) => {
       const mv = boardData.moves[e.move_number];
       if (!mv || mv.pass) return null;
@@ -487,7 +487,7 @@ function errorRingMarkers(i) {
 
 function suggestionMarkersFor(i) {
   return errors
-    .filter((e) => e.move_number > 0 && e.move_number <= i)
+    .filter((e) => e.move_number === i)
     .flatMap((e) => (e.suggested_moves || []).map((p) => ({ row: p.row, col: p.col, label: formatCoord(p.row, p.col) })));
 }
 

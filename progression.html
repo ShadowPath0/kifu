@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Progression — Kifu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <h1>Progression</h1>
+    <p class="muted">Le rang seul est un indicateur bruité. Il est présenté ici à côté du taux d'erreurs critiques par partie — c'est la corrélation entre les deux qui est actionnable, pas le rang isolément.</p>
+
+    <div class="panel">
+      <h2>Rang & erreurs critiques dans le temps</h2>
+      <div id="progression-chart" class="svg-chart-wrap"></div>
+      <p id="progression-empty" class="muted hidden">Pas encore assez de données (parties datées + historique de rang) pour tracer un graphique.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Ajouter une entrée de rang manuelle</h2>
+      <div class="field-row" style="align-items:flex-end;">
+        <div><label>Date</label><input id="rank-date" type="date" /></div>
+        <div><label>Rang</label><input id="rank-value" type="text" placeholder="ex : 1d, 5k" /></div>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="primary" id="rank-add-btn">Ajouter</button>
+      </div>
+      <div id="rank-error" class="error-msg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Erreurs persistantes</h2>
+      <p class="muted">Catégories toujours en tête du Pareto sur les 3 dernières périodes malgré le temps écoulé.</p>
+      <div id="persist-table"></div>
+      <p id="persist-empty" class="muted hidden">Pas assez de parties annotées pour calculer une tendance sur 3 périodes (il en faut au moins 6).</p>
+    </div>
+  </main>
+
+  <script src="js/sgf.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/progression.js"></script>
+</body>
+</html>

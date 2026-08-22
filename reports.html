@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rapports — Kifu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <h1>Rapports</h1>
+
+    <div class="panel no-print">
+      <div class="report-nav">
+        <button id="rp-prev">◀</button>
+        <strong id="rp-label" style="flex:1;text-align:center;"></strong>
+        <button id="rp-next">▶</button>
+        <select id="rp-period-type" style="margin-left:12px;">
+          <option value="week">Semaine</option>
+          <option value="month">Mois</option>
+        </select>
+        <button id="rp-today">Aujourd'hui</button>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button id="rp-export-md">⬇ Exporter en Markdown</button>
+        <button id="rp-print">🖨 Imprimer / PDF</button>
+      </div>
+    </div>
+
+    <div class="panel report-section" id="report-content"></div>
+  </main>
+
+  <script src="js/sgf.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/reports.js"></script>
+</body>
+</html>

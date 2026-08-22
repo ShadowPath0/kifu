@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — Kifu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <h1>Dashboard</h1>
+
+    <div class="stat-cards" id="stat-cards"></div>
+
+    <div class="panel">
+      <div class="toolbar" style="margin-bottom:0;">
+        <div class="field">
+          <label for="fl-date-from">Du</label>
+          <input id="fl-date-from" type="date" />
+        </div>
+        <div class="field">
+          <label for="fl-date-to">Au</label>
+          <input id="fl-date-to" type="date" />
+        </div>
+        <div class="field">
+          <label for="fl-color">Couleur</label>
+          <select id="fl-color">
+            <option value="">Toutes</option>
+            <option value="black">Noir</option>
+            <option value="white">Blanc</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fl-phase">Phase</label>
+          <select id="fl-phase">
+            <option value="">Toutes</option>
+            <option value="fuseki">Fuseki</option>
+            <option value="milieu">Milieu</option>
+            <option value="yose">Yose</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fl-severity">Sévérité</label>
+          <select id="fl-severity">
+            <option value="">Toutes</option>
+            <option value="mineure">Mineure</option>
+            <option value="moyenne">Moyenne</option>
+            <option value="critique">Critique</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fl-platform">Plateforme</label>
+          <input id="fl-platform" type="text" placeholder="ex : KGS" />
+        </div>
+        <div class="field">
+          <button id="fl-apply" class="primary">Filtrer</button>
+        </div>
+        <div class="field">
+          <button id="fl-30d">30 derniers jours</button>
+        </div>
+        <div class="field">
+          <button id="fl-reset">Tout l'historique</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h2>Pareto des erreurs</h2>
+        <div id="pareto-chart"></div>
+        <p id="pareto-empty" class="muted hidden">Aucune erreur taguée sur cette période.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Parties récentes</h2>
+        <div id="recent-games"></div>
+        <div class="modal-actions" style="justify-content:flex-start;">
+          <a class="btn primary" style="text-decoration:none;display:inline-block;" href="import.html">+ Importer une partie</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Heatmap phase × sévérité</h2>
+      <div id="heatmap"></div>
+      <p id="heatmap-empty" class="muted hidden">Aucune erreur taguée sur cette période.</p>
+    </div>
+  </main>
+
+  <script src="js/sgf.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

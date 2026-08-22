@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Étiquettes — Kifu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <h1>Gestion des étiquettes</h1>
+    <p class="muted">Une étiquette sert à la fois de filtre dans le dashboard et de valeur d'annotation sur le goban.</p>
+
+    <div class="panel">
+      <h2>Nouvelle étiquette</h2>
+      <div class="field-row">
+        <div>
+          <label for="new-name">Nom</label>
+          <input id="new-name" type="text" placeholder="ex : Erreur de direction" />
+        </div>
+        <div>
+          <label for="new-color">Couleur</label>
+          <input id="new-color" type="color" value="#6366f1" style="height:38px;padding:2px;" />
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-start;margin-top:14px;">
+        <button class="primary" id="add-btn">Ajouter</button>
+      </div>
+      <div id="form-error" class="error-msg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Étiquettes existantes</h2>
+      <table>
+        <thead><tr><th>Couleur</th><th>Nom</th><th>Type</th><th></th></tr></thead>
+        <tbody id="cat-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="js/sgf.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/categories.js"></script>
+</body>
+</html>

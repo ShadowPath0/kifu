@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Parties — Kifu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <h1>Parties</h1>
+
+    <div class="toolbar panel">
+      <div class="field">
+        <label for="fl-search">Recherche</label>
+        <input id="fl-search" type="text" placeholder="titre, adversaire..." />
+      </div>
+      <div class="field">
+        <label for="fl-color">Couleur jouée</label>
+        <select id="fl-color">
+          <option value="">Toutes</option>
+          <option value="black">Noir</option>
+          <option value="white">Blanc</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fl-platform">Plateforme</label>
+        <input id="fl-platform" type="text" placeholder="ex : KGS" />
+      </div>
+      <div class="field">
+        <label for="fl-date-from">Du</label>
+        <input id="fl-date-from" type="date" />
+      </div>
+      <div class="field">
+        <label for="fl-date-to">Au</label>
+        <input id="fl-date-to" type="date" />
+      </div>
+      <div class="field">
+        <button id="fl-apply" class="primary">Filtrer</button>
+      </div>
+      <div class="field">
+        <button id="fl-reset">Réinitialiser</button>
+      </div>
+      <div class="field" style="margin-left:auto;">
+        <a class="btn primary" style="text-decoration:none;display:inline-block;" href="import.html">+ Importer une partie</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <table id="games-table">
+        <thead>
+          <tr>
+            <th data-sort="date_played">Date</th>
+            <th data-sort="opponent_name">Adversaire</th>
+            <th data-sort="opponent_rank">Rang adv.</th>
+            <th data-sort="user_color">Couleur</th>
+            <th data-sort="result">Résultat</th>
+            <th data-sort="platform">Plateforme</th>
+            <th data-sort="error_count">Erreurs taguées</th>
+          </tr>
+        </thead>
+        <tbody id="games-tbody"></tbody>
+      </table>
+      <p id="empty-msg" class="muted hidden">Aucune partie ne correspond à ces filtres.</p>
+    </div>
+  </main>
+
+  <script src="js/sgf.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/games.js"></script>
+</body>
+</html>

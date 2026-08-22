@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Importer une partie — Kifu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <h1>Importer une partie</h1>
+
+    <div class="panel">
+      <h2>1. Fichier SGF</h2>
+      <div id="dropzone" class="dropzone">
+        Glissez-déposez un fichier .sgf ici, ou <label for="sgf-input" style="display:inline;color:var(--accent-dark);cursor:pointer;text-decoration:underline;">parcourir</label>
+        <input id="sgf-input" type="file" accept=".sgf" class="hidden" />
+      </div>
+      <div id="sgf-status" class="muted" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="panel">
+      <h2>2. Ou lien de review externe</h2>
+      <label for="external-link">Lien externe (ex : review OGS)</label>
+      <input id="external-link" type="url" placeholder="https://online-go.com/review/..." />
+    </div>
+
+    <div class="panel">
+      <h2>3. Détails de la partie</h2>
+      <p class="muted">Pré-rempli automatiquement si un SGF a été importé. Le reste (rang adversaire, plateforme, cadence, couleur jouée) reste à compléter.</p>
+
+      <div class="field-row">
+        <div>
+          <label for="f-title">Titre</label>
+          <input id="f-title" type="text" placeholder="auto-généré si vide" />
+        </div>
+        <div>
+          <label for="f-date">Date jouée</label>
+          <input id="f-date" type="date" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label for="f-opponent">Adversaire</label>
+          <input id="f-opponent" type="text" />
+        </div>
+        <div>
+          <label for="f-opponent-rank">Rang adversaire</label>
+          <input id="f-opponent-rank" type="text" placeholder="ex : 3d, 1k" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label for="f-color">Couleur jouée</label>
+          <select id="f-color">
+            <option value="">—</option>
+            <option value="black">Noir</option>
+            <option value="white">Blanc</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-user-rank">Votre rang à l'époque</label>
+          <input id="f-user-rank" type="text" placeholder="ex : 1d" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label for="f-komi">Komi</label>
+          <input id="f-komi" type="number" step="0.5" />
+        </div>
+        <div>
+          <label for="f-result">Résultat</label>
+          <input id="f-result" type="text" placeholder="ex : W+R, B+3.5" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label for="f-time-control">Cadence</label>
+          <select id="f-time-control">
+            <option value="">—</option>
+            <option value="blitz">Blitz</option>
+            <option value="normal">Normale</option>
+            <option value="correspondance">Correspondance</option>
+            <option value="libre">Libre</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-platform">Plateforme</label>
+          <input id="f-platform" type="text" placeholder="KGS, Fox, OGS, Tygem, tournoi papier..." />
+        </div>
+      </div>
+
+      <label for="f-comment">Commentaire libre (impressions générales, plan de jeu...)</label>
+      <textarea id="f-comment" rows="5"></textarea>
+
+      <div class="modal-actions" style="justify-content:flex-start;margin-top:20px;">
+        <button class="primary" id="submit-btn">Enregistrer la partie</button>
+      </div>
+      <div id="form-error" class="error-msg"></div>
+    </div>
+  </main>
+
+  <script src="js/sgf.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/import.js"></script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fiche partie — Kifu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <div class="panel" id="meta-panel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div style="flex:1;">
+          <h1 id="meta-title">…</h1>
+          <div id="meta-summary" class="muted"></div>
+          <div id="meta-external" style="margin-top:6px;"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button id="meta-edit-btn">Modifier</button>
+          <button id="meta-delete-btn" class="danger">Supprimer</button>
+        </div>
+      </div>
+
+      <div id="meta-edit-form" class="hidden" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+        <div class="field-row">
+          <div><label>Titre</label><input id="e-title" type="text" /></div>
+          <div><label>Date jouée</label><input id="e-date" type="date" /></div>
+        </div>
+        <div class="field-row">
+          <div><label>Adversaire</label><input id="e-opponent" type="text" /></div>
+          <div><label>Rang adversaire</label><input id="e-opponent-rank" type="text" /></div>
+        </div>
+        <div class="field-row">
+          <div><label>Couleur jouée</label>
+            <select id="e-color"><option value="">—</option><option value="black">Noir</option><option value="white">Blanc</option></select>
+          </div>
+          <div><label>Votre rang à l'époque</label><input id="e-user-rank" type="text" /></div>
+        </div>
+        <div class="field-row">
+          <div><label>Komi</label><input id="e-komi" type="number" step="0.5" /></div>
+          <div><label>Résultat</label><input id="e-result" type="text" /></div>
+        </div>
+        <div class="field-row">
+          <div><label>Cadence</label>
+            <select id="e-time-control"><option value="">—</option><option value="blitz">Blitz</option><option value="normal">Normale</option><option value="correspondance">Correspondance</option><option value="libre">Libre</option></select>
+          </div>
+          <div><label>Plateforme</label><input id="e-platform" type="text" /></div>
+        </div>
+        <label>Lien externe</label><input id="e-external-link" type="url" />
+        <div class="modal-actions" style="justify-content:flex-start;">
+          <button class="primary" id="meta-save-btn">Enregistrer</button>
+          <button id="meta-cancel-btn">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="board-panel">
+      <div id="no-sgf-msg" class="muted hidden">Cette partie n'a pas de contenu SGF (import par lien externe ou saisie manuelle) : pas de goban interactif disponible. Vous pouvez tout de même annoter des erreurs par numéro de coup ci-dessous.</div>
+
+      <div id="goban-section" class="goban-wrap hidden">
+        <div>
+          <div id="picking-banner" class="picking-banner hidden">
+            Cliquez sur le plateau pour indiquer le(s) coup(s) recommandé(s) (position juste avant le coup joué). Cliquez à nouveau sur un point pour le retirer.
+            <button class="primary" id="picking-done-btn">Terminé</button>
+          </div>
+          <canvas id="goban-canvas"></canvas>
+          <div class="goban-controls">
+            <button id="ctl-first" class="icon-btn">⏮</button>
+            <button id="ctl-prev" class="icon-btn">◀</button>
+            <input id="ctl-slider" type="range" min="0" max="0" value="0" />
+            <button id="ctl-next" class="icon-btn">▶</button>
+            <button id="ctl-last" class="icon-btn">⏭</button>
+            <input id="ctl-jump" type="number" min="0" style="width:70px;" placeholder="coup n°" />
+          </div>
+          <div id="ctl-move-label" class="muted" style="margin-top:6px;">Coup 0 (position initiale)</div>
+          <div class="modal-actions" style="justify-content:flex-start;">
+            <button class="primary" id="annotate-btn">Marquer une erreur sur ce coup</button>
+          </div>
+        </div>
+        <div class="error-sidebar">
+          <h3>Erreurs de la partie</h3>
+          <div id="error-list"></div>
+        </div>
+      </div>
+
+      <div id="manual-error-section" class="hidden">
+        <h3>Erreurs de la partie</h3>
+        <div id="error-list-manual"></div>
+        <div class="field-row">
+          <div><label>Numéro de coup</label><input id="manual-move-number" type="number" min="0" value="0" /></div>
+          <div></div>
+        </div>
+        <div class="modal-actions" style="justify-content:flex-start;">
+          <button class="primary" id="annotate-manual-btn">Ajouter une erreur</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Commentaire libre</h2>
+      <p class="muted">Impressions générales, plan de jeu prévu vs réel, ce qu'il fallait faire différemment stratégiquement.</p>
+      <textarea id="comment-text" rows="8"></textarea>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="primary" id="comment-save-btn">Enregistrer le commentaire</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="annotate-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2><span id="am-title">Annoter une erreur</span> — coup <span id="am-move-no"></span></h2>
+      <label>Catégorie</label>
+      <select id="am-category"></select>
+      <label>Phase</label>
+      <select id="am-phase">
+        <option value="fuseki">Fuseki</option>
+        <option value="milieu">Milieu</option>
+        <option value="yose">Yose</option>
+      </select>
+      <label>Sévérité</label>
+      <select id="am-severity">
+        <option value="mineure">Mineure</option>
+        <option value="moyenne" selected>Moyenne</option>
+        <option value="critique">Critique</option>
+      </select>
+      <label>Note (optionnel)</label>
+      <textarea id="am-note" rows="3"></textarea>
+
+      <div id="am-suggestions-section" class="hidden">
+        <label>Coup(s) recommandé(s) (optionnel)</label>
+        <div id="am-suggestions-chips" class="chip-row"></div>
+        <button id="am-pick-suggestions-btn" type="button">📍 Indiquer sur le plateau</button>
+      </div>
+
+      <div id="am-error" class="error-msg"></div>
+      <div class="modal-actions">
+        <button id="am-cancel">Annuler</button>
+        <button class="primary" id="am-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sgf.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/goban.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

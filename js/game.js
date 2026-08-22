@@ -290,6 +290,8 @@ function buildSnapshot() {
   };
 }
 
+let lastParticipants = [];
+
 function updateRoomUI() {
   const isController = Room.isController();
   document.getElementById("room-status").textContent = Room.active
@@ -303,6 +305,7 @@ function updateRoomUI() {
       if (Room.active) el.disabled = !isController;
       else el.disabled = false;
     });
+  renderParticipants(lastParticipants);
 }
 
 function renderParticipants(list) {
@@ -310,12 +313,15 @@ function renderParticipants(list) {
   el.innerHTML = list
     .map((p) => {
       const isCtrl = p.id === Room.controllerId;
-      const canHandOff = Room.isController() && p.id !== Room.participantId;
+      const isSelf = p.id === Room.participantId;
+      const canHandOff = Room.isController() && !isSelf;
+      const canReclaim = !isCtrl && isSelf;
       return `
         <div class="participant-row">
-          <span>${escapeHtml(p.name)}${p.id === Room.participantId ? " (vous)" : ""}</span>
+          <span>${escapeHtml(p.name)}${isSelf ? " (vous)" : ""}</span>
           ${isCtrl ? '<span class="badge-controller">CONTRÔLE</span>' : ""}
           ${canHandOff ? `<button data-handoff="${escapeHtml(p.id)}">Donner le contrôle</button>` : ""}
+          ${canReclaim ? `<button data-handoff="${escapeHtml(p.id)}">Reprendre le contrôle</button>` : ""}
         </div>`;
     })
     .join("");
@@ -411,7 +417,10 @@ function wireRoomHandlers() {
     updateRoomUI();
   });
 
-  Room.on("participants", renderParticipants);
+  Room.on("participants", (list) => {
+    lastParticipants = list;
+    renderParticipants(list);
+  });
 }
 
 // ---------- board / goban ----------

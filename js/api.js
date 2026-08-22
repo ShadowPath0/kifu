@@ -201,6 +201,10 @@ const api = {
       "markers",
       loadCollection("markers").filter((m) => m.game_id !== numId)
     );
+    saveCollection(
+      "branches",
+      loadCollection("branches").filter((b) => b.game_id !== numId)
+    );
   },
 
   async parseSgf(sgf_content) {
@@ -338,6 +342,38 @@ const api = {
     saveCollection(
       "markers",
       loadCollection("markers").filter((m) => m.id !== numId)
+    );
+  },
+
+  // branches / variantes (séquences posées librement à partir d'un coup de la partie)
+  async listBranches(gameId) {
+    const numId = Number(gameId);
+    return loadCollection("branches")
+      .filter((b) => b.game_id === numId)
+      .sort((a, b) => a.id - b.id);
+  },
+
+  async createBranch(gameId, payload) {
+    const numGameId = Number(gameId);
+    const branches = loadCollection("branches");
+    const branch = {
+      id: nextId("branches"),
+      game_id: numGameId,
+      anchor_move_number: payload.anchor_move_number,
+      name: payload.name || `Variante ${branches.filter((b) => b.game_id === numGameId && b.anchor_move_number === payload.anchor_move_number).length + 1}`,
+      moves: payload.moves || [],
+      created_at: nowIso(),
+    };
+    branches.push(branch);
+    saveCollection("branches", branches);
+    return branch;
+  },
+
+  async deleteBranch(id) {
+    const numId = Number(id);
+    saveCollection(
+      "branches",
+      loadCollection("branches").filter((b) => b.id !== numId)
     );
   },
 

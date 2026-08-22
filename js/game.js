@@ -8,6 +8,15 @@ let pickingMode = false;
 let editingErrorId = null;
 let markers = [];
 let markerTool = null;
+let branches = [];
+let branchMode = null; // null | "creating" | "viewing"
+let branchDraftMoves = [];
+let branchDraftBoard = null;
+let branchNextColor = null;
+let branchAnchorIndex = null;
+let viewingBranch = null;
+let branchViewStates = null;
+let branchViewIndex = 0;
 
 const MARKER_TOOL_LABEL = {
   triangle: "Triangle",
@@ -68,6 +77,7 @@ async function loadOwnedGame() {
     try {
       boardData = await api.getBoardStates(gameId);
       markers = await api.listMarkers(gameId);
+      branches = await api.listBranches(gameId);
       document.getElementById("goban-section").classList.remove("hidden");
       document.getElementById("share-room-btn").classList.remove("hidden");
       goban = new Goban(document.getElementById("goban-canvas"), boardData.size);
@@ -253,6 +263,7 @@ function applySnapshot(data) {
   categories = data.categories;
   errors = game.errors || [];
   markers = data.markers || [];
+  branches = data.branches || [];
   Room.setController(data.controllerId);
 
   document.getElementById("guest-waiting").classList.add("hidden");
@@ -285,6 +296,7 @@ function buildSnapshot() {
     game,
     categories,
     markers,
+    branches,
     currentMoveIndex,
     controllerId: Room.controllerId,
   };
@@ -300,7 +312,7 @@ function updateRoomUI() {
       : " — vous regardez"
     : "";
   document
-    .querySelectorAll("#ctl-first,#ctl-prev,#ctl-next,#ctl-last,#ctl-slider,#ctl-jump,#annotate-btn,.marker-btn")
+    .querySelectorAll("#ctl-first,#ctl-prev,#ctl-next,#ctl-last,#ctl-slider,#ctl-jump,#annotate-btn,.marker-btn,#branch-create-btn")
     .forEach((el) => {
       if (Room.active) el.disabled = !isController;
       else el.disabled = false;
@@ -412,6 +424,31 @@ function wireRoomHandlers() {
     setMoveIndex(currentMoveIndex);
   });
 
+  Room.on("intent:create-branch", async (payload) => {
+    if (!Room.isOwner) return;
+    const created = await api.createBranch(gameId, payload);
+    branches.push(created);
+    renderBranchesList();
+    Room.send("sync:branch-created", { branch: created });
+  });
+  Room.on("sync:branch-created", ({ branch }) => {
+    if (!branches.some((b) => b.id === branch.id)) branches.push(branch);
+    renderBranchesList();
+  });
+
+  Room.on("intent:delete-branch", async ({ id }) => {
+    if (!Room.isOwner) return;
+    await api.deleteBranch(id);
+    branches = branches.filter((b) => b.id !== id);
+    renderBranchesList();
+    Room.send("sync:branch-deleted", { id });
+  });
+  Room.on("sync:branch-deleted", ({ id }) => {
+    branches = branches.filter((b) => b.id !== id);
+    if (viewingBranch && viewingBranch.id === id) exitBranchView();
+    else renderBranchesList();
+  });
+
   Room.on("control-transfer", ({ newControllerId }) => {
     Room.setController(newControllerId);
     updateRoomUI();
@@ -440,8 +477,11 @@ function setupBoardControls() {
     if (!isNaN(n)) navigateTo(Math.max(0, Math.min(boardData.states.length - 1, n)));
   });
   document.getElementById("goban-canvas").addEventListener("click", (e) => {
+    if (branchMode === "viewing") return;
     if (!guardController()) return;
-    if (pickingMode) {
+    if (branchMode === "creating") {
+      handleBranchClick(e);
+    } else if (pickingMode) {
       togglePickedPoint(e);
     } else if (markerTool) {
       handleMarkerClick(e);
@@ -456,12 +496,40 @@ function setupBoardControls() {
   document.getElementById("am-pick-suggestions-btn").addEventListener("click", startPickingSuggestions);
   document.getElementById("picking-done-btn").addEventListener("click", finishPickingSuggestions);
 
-  document.querySelectorAll(".marker-btn").forEach((btn) => {
+  document.querySelectorAll(".marker-btn[data-symbol]").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (!guardController()) return;
       markerTool = markerTool === btn.dataset.symbol ? null : btn.dataset.symbol;
       updateMarkerToolbarUI();
     });
+  });
+
+  document.getElementById("branch-create-btn").addEventListener("click", startBranchCreation);
+  document.getElementById("branch-cancel-btn").addEventListener("click", cancelBranchCreation);
+  document.getElementById("branch-save-btn").addEventListener("click", saveBranchCreation);
+  document.getElementById("branch-undo-btn").addEventListener("click", undoBranchMove);
+  document.querySelectorAll("#branch-toolbar .marker-btn[data-color]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      branchNextColor = btn.dataset.color;
+      updateBranchColorButtons();
+    });
+  });
+  document.getElementById("branch-view-exit").addEventListener("click", exitBranchView);
+  document.getElementById("branch-view-first").addEventListener("click", () => {
+    branchViewIndex = 0;
+    renderBranchView();
+  });
+  document.getElementById("branch-view-prev").addEventListener("click", () => {
+    branchViewIndex = Math.max(0, branchViewIndex - 1);
+    renderBranchView();
+  });
+  document.getElementById("branch-view-next").addEventListener("click", () => {
+    branchViewIndex = Math.min(branchViewStates.length - 1, branchViewIndex + 1);
+    renderBranchView();
+  });
+  document.getElementById("branch-view-last").addEventListener("click", () => {
+    branchViewIndex = branchViewStates.length - 1;
+    renderBranchView();
   });
 }
 
@@ -470,6 +538,8 @@ function navigateTo(i) {
     document.getElementById("ctl-slider").value = currentMoveIndex;
     return;
   }
+  if (branchMode === "creating") cancelBranchCreation();
+  if (branchMode === "viewing") exitBranchView();
   setMoveIndex(i);
   if (Room.active) Room.send("sync:move", { moveIndex: i });
 }
@@ -513,6 +583,158 @@ function setMoveIndex(i) {
 
   goban.draw(boardData.states[i], move, errorRingMarkers(i), suggestionMarkersFor(i), symbolMarkersFor(i));
   renderErrorList();
+  renderBranchesList();
+}
+
+// ---------- branches / variantes (poser des pierres façon OGS) ----------
+
+function renderBranchesList() {
+  const el = document.getElementById("branches-list");
+  if (!el) return;
+  const atMove = branches.filter((b) => b.anchor_move_number === currentMoveIndex);
+  el.innerHTML = atMove
+    .map(
+      (b) =>
+        `<span class="branch-chip" data-view="${b.id}">🌿 ${escapeHtml(b.name)} (${b.moves.length} coup${b.moves.length > 1 ? "s" : ""}) <button data-del-branch="${b.id}">✕</button></span>`
+    )
+    .join("");
+  el.querySelectorAll(".branch-chip").forEach((chip) => {
+    chip.addEventListener("click", (e) => {
+      if (e.target.closest("button")) return;
+      const branch = branches.find((b) => b.id === parseInt(chip.dataset.view, 10));
+      if (branch) enterBranchView(branch);
+    });
+  });
+  el.querySelectorAll("button[data-del-branch]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteBranch(parseInt(btn.dataset.delBranch, 10));
+    });
+  });
+}
+
+function startBranchCreation() {
+  if (!guardController()) return;
+  if (branchMode) return;
+  branchMode = "creating";
+  branchAnchorIndex = currentMoveIndex;
+  branchDraftMoves = [];
+  branchDraftBoard = stonesToBoard(boardData.states[currentMoveIndex], boardData.size);
+  const lastMainMove = boardData.moves[currentMoveIndex];
+  branchNextColor = lastMainMove && lastMainMove.color === "b" ? "w" : "b";
+  document.getElementById("branch-toolbar").classList.remove("hidden");
+  document.getElementById("branch-name-input").value = "";
+  updateBranchColorButtons();
+  redrawBranchDraft();
+}
+
+function updateBranchColorButtons() {
+  document.querySelectorAll("#branch-toolbar .marker-btn[data-color]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.color === branchNextColor);
+  });
+}
+
+function redrawBranchDraft() {
+  const size = boardData.size;
+  const stones = boardSnapshot(branchDraftBoard, size);
+  const lastMv = branchDraftMoves.length
+    ? branchDraftMoves[branchDraftMoves.length - 1]
+    : boardData.moves[branchAnchorIndex];
+  goban.draw(stones, lastMv, [], [], []);
+  document.getElementById("ctl-move-label").textContent = `🌿 Branche en cours — coup ${branchDraftMoves.length + 1} (${
+    branchNextColor === "b" ? "Noir" : "Blanc"
+  } à jouer)`;
+}
+
+function handleBranchClick(clickEvent) {
+  const pos = goban.pixelToPos(clickEvent.offsetX, clickEvent.offsetY);
+  if (!pos) return;
+  if (branchDraftBoard[pos.row][pos.col] !== null) return;
+  playMove(branchDraftBoard, pos.row, pos.col, branchNextColor, boardData.size);
+  branchDraftMoves.push({ row: pos.row, col: pos.col, color: branchNextColor });
+  branchNextColor = branchNextColor === "b" ? "w" : "b";
+  updateBranchColorButtons();
+  redrawBranchDraft();
+}
+
+function undoBranchMove() {
+  if (!branchDraftMoves.length) return;
+  branchDraftMoves.pop();
+  branchDraftBoard = stonesToBoard(boardData.states[branchAnchorIndex], boardData.size);
+  for (const mv of branchDraftMoves) playMove(branchDraftBoard, mv.row, mv.col, mv.color, boardData.size);
+  const last = branchDraftMoves[branchDraftMoves.length - 1];
+  const anchorMove = boardData.moves[branchAnchorIndex];
+  branchNextColor = last ? (last.color === "b" ? "w" : "b") : anchorMove && anchorMove.color === "b" ? "w" : "b";
+  updateBranchColorButtons();
+  redrawBranchDraft();
+}
+
+function cancelBranchCreation() {
+  branchMode = null;
+  document.getElementById("branch-toolbar").classList.add("hidden");
+  setMoveIndex(currentMoveIndex);
+}
+
+async function saveBranchCreation() {
+  if (!branchDraftMoves.length) {
+    showToast("Posez au moins une pierre avant d'enregistrer", true);
+    return;
+  }
+  const name = document.getElementById("branch-name-input").value.trim() || null;
+  const payload = { anchor_move_number: branchAnchorIndex, name, moves: branchDraftMoves };
+  await performCreateBranch(payload);
+  branchMode = null;
+  document.getElementById("branch-toolbar").classList.add("hidden");
+  setMoveIndex(currentMoveIndex);
+  showToast("Branche enregistrée");
+}
+
+async function performCreateBranch(payload) {
+  if (Room.active && !Room.isOwner) {
+    Room.send("intent:create-branch", payload);
+    return;
+  }
+  const created = await api.createBranch(gameId, payload);
+  branches.push(created);
+  if (Room.active) Room.send("sync:branch-created", { branch: created });
+}
+
+function enterBranchView(branch) {
+  branchMode = "viewing";
+  viewingBranch = branch;
+  branchViewStates = computeBranchStates(boardData.states[branch.anchor_move_number], boardData.size, branch.moves);
+  branchViewIndex = branchViewStates.length - 1;
+  document.getElementById("branch-view-toolbar").classList.remove("hidden");
+  document.getElementById("branch-view-name").textContent = "🌿 " + branch.name;
+  renderBranchView();
+}
+
+function renderBranchView() {
+  const move =
+    branchViewIndex > 0 ? viewingBranch.moves[branchViewIndex - 1] : boardData.moves[viewingBranch.anchor_move_number];
+  goban.draw(branchViewStates[branchViewIndex], move, [], [], []);
+  document.getElementById("ctl-move-label").textContent = `🌿 ${viewingBranch.name} — coup ${branchViewIndex} / ${viewingBranch.moves.length}`;
+}
+
+function exitBranchView() {
+  branchMode = null;
+  viewingBranch = null;
+  document.getElementById("branch-view-toolbar").classList.add("hidden");
+  setMoveIndex(currentMoveIndex);
+}
+
+async function deleteBranch(id) {
+  if (!guardController()) return;
+  if (!confirm("Supprimer cette branche ?")) return;
+  if (Room.active && !Room.isOwner) {
+    Room.send("intent:delete-branch", { id });
+  } else {
+    await api.deleteBranch(id);
+    branches = branches.filter((b) => b.id !== id);
+    if (Room.active) Room.send("sync:branch-deleted", { id });
+  }
+  if (viewingBranch && viewingBranch.id === id) exitBranchView();
+  else renderBranchesList();
 }
 
 // ---------- symboles libres (façon OGS) ----------

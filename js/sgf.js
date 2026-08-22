@@ -192,6 +192,24 @@ function playMove(board, row, col, color, size) {
   }
 }
 
+function stonesToBoard(stones, size) {
+  const board = createEmptyBoard(size);
+  for (const st of stones || []) board[st.row][st.col] = st.color;
+  return board;
+}
+
+// Rejoue une branche (séquence libre posée par l'utilisateur) à partir d'un plateau de départ.
+// Retourne, pour chaque coup de la branche (0 = position de départ), l'état du plateau.
+function computeBranchStates(startStones, size, moves) {
+  const board = stonesToBoard(startStones, size);
+  const states = [boardSnapshot(board, size)];
+  for (const mv of moves) {
+    playMove(board, mv.row, mv.col, mv.color, size);
+    states.push(boardSnapshot(board, size));
+  }
+  return states;
+}
+
 function boardSnapshot(board, size) {
   const stones = [];
   for (let r = 0; r < size; r++) {

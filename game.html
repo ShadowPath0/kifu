@@ -111,8 +111,30 @@
             <span id="marker-active-label" class="muted"></span>
           </div>
 
+          <div id="branch-toolbar" class="branch-toolbar hidden">
+            <span class="muted">Prochaine pierre :</span>
+            <button class="marker-btn" data-color="b" title="Noir">⚫</button>
+            <button class="marker-btn" data-color="w" title="Blanc">⚪</button>
+            <button id="branch-undo-btn" title="Annuler le dernier coup">↩ Annuler le coup</button>
+            <input id="branch-name-input" type="text" placeholder="Nom de la variante (optionnel)" style="width:200px;" />
+            <button class="primary" id="branch-save-btn">💾 Enregistrer</button>
+            <button id="branch-cancel-btn">✕ Annuler</button>
+          </div>
+
+          <div id="branch-view-toolbar" class="branch-toolbar hidden">
+            <strong id="branch-view-name"></strong>
+            <button id="branch-view-first" class="icon-btn">⏮</button>
+            <button id="branch-view-prev" class="icon-btn">◀</button>
+            <button id="branch-view-next" class="icon-btn">▶</button>
+            <button id="branch-view-last" class="icon-btn">⏭</button>
+            <button id="branch-view-exit">✕ Quitter la branche</button>
+          </div>
+
+          <div id="branches-list" class="chip-row" style="margin-top:8px;"></div>
+
           <div class="modal-actions" style="justify-content:flex-start;">
             <button class="primary" id="annotate-btn">Marquer une erreur sur ce coup</button>
+            <button id="branch-create-btn">🌿 Créer une branche ici</button>
           </div>
         </div>
         <div class="error-sidebar">
@@ -190,11 +212,11 @@
     </div>
   </div>
 
-  <script src="js/sgf.js?v=3"></script>
-  <script src="js/api.js?v=3"></script>
-  <script src="js/nav.js?v=3"></script>
-  <script src="js/goban.js?v=3"></script>
-  <script src="js/room.js?v=3"></script>
-  <script src="js/game.js?v=3"></script>
+  <script src="js/sgf.js?v=4"></script>
+  <script src="js/api.js?v=4"></script>
+  <script src="js/nav.js?v=4"></script>
+  <script src="js/goban.js?v=4"></script>
+  <script src="js/room.js?v=4"></script>
+  <script src="js/game.js?v=4"></script>
 </body>
 </html>

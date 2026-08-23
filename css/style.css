@@ -501,6 +501,14 @@ tbody tr {
   flex-wrap: wrap;
 }
 
+.branch-section {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #86efac;
+  border-radius: var(--radius);
+  background: #f0fdf4;
+}
+
 .branch-toolbar {
   display: flex;
   align-items: center;

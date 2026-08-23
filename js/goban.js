@@ -1,4 +1,5 @@
 const SEVERITY_RING = { mineure: 2, moyenne: 3.5, critique: 5 };
+const GOBAN_COL_LETTERS = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
 
 const HOSHI = {
   19: [3, 9, 15],
@@ -12,10 +13,32 @@ class Goban {
     this.ctx = canvas.getContext("2d");
     this.size = size;
     this.canvasSize = 600;
-    this.margin = 30;
+    this.margin = 34;
     this.cell = (this.canvasSize - 2 * this.margin) / (size - 1);
     canvas.width = this.canvasSize;
     canvas.height = this.canvasSize;
+  }
+
+  drawCoordinates() {
+    const ctx = this.ctx;
+    ctx.fillStyle = "#5a4322";
+    ctx.font = `${Math.max(9, Math.round(this.cell * 0.26))}px sans-serif`;
+    ctx.textBaseline = "middle";
+    for (let c = 0; c < this.size; c++) {
+      const label = GOBAN_COL_LETTERS[c] || "?";
+      const x = this.margin + c * this.cell;
+      ctx.textAlign = "center";
+      ctx.fillText(label, x, this.margin * 0.45);
+      ctx.fillText(label, x, this.canvasSize - this.margin * 0.45);
+    }
+    for (let r = 0; r < this.size; r++) {
+      const label = String(r + 1);
+      const y = this.margin + (this.size - 1 - r) * this.cell;
+      ctx.textAlign = "right";
+      ctx.fillText(label, this.margin * 0.64, y);
+      ctx.textAlign = "left";
+      ctx.fillText(label, this.canvasSize - this.margin * 0.64, y);
+    }
   }
 
   posToPixel(row, col) {
@@ -39,6 +62,7 @@ class Goban {
     const ctx = this.ctx;
     const s = this.canvasSize;
     ctx.clearRect(0, 0, s, s);
+    this.drawCoordinates();
 
     // grid
     ctx.strokeStyle = "#3a2a0d";

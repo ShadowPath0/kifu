@@ -17,6 +17,9 @@ let branchAnchorIndex = null;
 let viewingBranch = null;
 let branchViewStates = null;
 let branchViewIndex = 0;
+let remoteDraftAnchor = null;
+let remoteDraftMoves = [];
+let remoteDraftBoard = null;
 
 const MARKER_TOOL_LABEL = {
   triangle: "Triangle",
@@ -449,6 +452,32 @@ function wireRoomHandlers() {
     else renderBranchesList();
   });
 
+  Room.on("branch-draft-start", ({ anchorMoveIndex }) => {
+    remoteDraftAnchor = anchorMoveIndex;
+    remoteDraftMoves = [];
+    remoteDraftBoard = stonesToBoard(boardData.states[anchorMoveIndex], boardData.size);
+    redrawRemoteDraft();
+  });
+  Room.on("branch-draft-move", ({ row, col, color }) => {
+    if (!remoteDraftBoard) return;
+    playMove(remoteDraftBoard, row, col, color, boardData.size);
+    remoteDraftMoves.push({ row, col, color });
+    redrawRemoteDraft();
+  });
+  Room.on("branch-draft-undo", () => {
+    if (!remoteDraftBoard) return;
+    remoteDraftMoves.pop();
+    remoteDraftBoard = stonesToBoard(boardData.states[remoteDraftAnchor], boardData.size);
+    for (const mv of remoteDraftMoves) playMove(remoteDraftBoard, mv.row, mv.col, mv.color, boardData.size);
+    redrawRemoteDraft();
+  });
+  Room.on("branch-draft-end", () => {
+    remoteDraftAnchor = null;
+    remoteDraftMoves = [];
+    remoteDraftBoard = null;
+    setMoveIndex(currentMoveIndex);
+  });
+
   Room.on("control-transfer", ({ newControllerId }) => {
     Room.setController(newControllerId);
     updateRoomUI();
@@ -626,6 +655,7 @@ function startBranchCreation() {
   document.getElementById("branch-name-input").value = "";
   updateBranchColorButtons();
   redrawBranchDraft();
+  if (Room.active) Room.send("branch-draft-start", { anchorMoveIndex: branchAnchorIndex });
 }
 
 function updateBranchColorButtons() {
@@ -646,15 +676,28 @@ function redrawBranchDraft() {
   } à jouer)`;
 }
 
+function redrawRemoteDraft() {
+  const size = boardData.size;
+  const stones = boardSnapshot(remoteDraftBoard, size);
+  const lastMv = remoteDraftMoves.length
+    ? remoteDraftMoves[remoteDraftMoves.length - 1]
+    : boardData.moves[remoteDraftAnchor];
+  goban.draw(stones, lastMv, [], [], []);
+  const controllerName = (lastParticipants.find((p) => p.id === Room.controllerId) || {}).name || "L'hôte";
+  document.getElementById("ctl-move-label").textContent = `🌿 ${controllerName} compose une séquence en direct… (coup ${remoteDraftMoves.length})`;
+}
+
 function handleBranchClick(clickEvent) {
   const pos = goban.pixelToPos(clickEvent.offsetX, clickEvent.offsetY);
   if (!pos) return;
   if (branchDraftBoard[pos.row][pos.col] !== null) return;
-  playMove(branchDraftBoard, pos.row, pos.col, branchNextColor, boardData.size);
-  branchDraftMoves.push({ row: pos.row, col: pos.col, color: branchNextColor });
-  branchNextColor = branchNextColor === "b" ? "w" : "b";
+  const color = branchNextColor;
+  playMove(branchDraftBoard, pos.row, pos.col, color, boardData.size);
+  branchDraftMoves.push({ row: pos.row, col: pos.col, color });
+  branchNextColor = color === "b" ? "w" : "b";
   updateBranchColorButtons();
   redrawBranchDraft();
+  if (Room.active) Room.send("branch-draft-move", { row: pos.row, col: pos.col, color });
 }
 
 function undoBranchMove() {
@@ -667,12 +710,14 @@ function undoBranchMove() {
   branchNextColor = last ? (last.color === "b" ? "w" : "b") : anchorMove && anchorMove.color === "b" ? "w" : "b";
   updateBranchColorButtons();
   redrawBranchDraft();
+  if (Room.active) Room.send("branch-draft-undo", {});
 }
 
 function cancelBranchCreation() {
   branchMode = null;
   document.getElementById("branch-toolbar").classList.add("hidden");
   setMoveIndex(currentMoveIndex);
+  if (Room.active) Room.send("branch-draft-end", {});
 }
 
 async function saveBranchCreation() {
@@ -686,6 +731,7 @@ async function saveBranchCreation() {
   branchMode = null;
   document.getElementById("branch-toolbar").classList.add("hidden");
   setMoveIndex(currentMoveIndex);
+  if (Room.active) Room.send("branch-draft-end", {});
   showToast("Branche enregistrée");
 }
 

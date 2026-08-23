@@ -39,19 +39,20 @@ const PRESET_CATEGORIES = [
   ["Surconcentration locale", "#6366f1"],
   ["Erreur de yose", "#a855f7"],
   ["Comptage erroné", "#ec4899"],
+  ["Erreurs de forme", "#0ea5e9"],
 ];
 
 function ensureSeedData() {
   const categories = loadCollection("categories");
-  if (categories.length === 0) {
-    const seeded = PRESET_CATEGORIES.map(([name, color]) => ({
-      id: nextId("categories"),
-      name,
-      color,
-      is_preset: true,
-    }));
-    saveCollection("categories", seeded);
+  const existingNames = new Set(categories.map((c) => c.name));
+  let changed = false;
+  for (const [name, color] of PRESET_CATEGORIES) {
+    if (!existingNames.has(name)) {
+      categories.push({ id: nextId("categories"), name, color, is_preset: true });
+      changed = true;
+    }
   }
+  if (changed) saveCollection("categories", categories);
 }
 ensureSeedData();
 

@@ -116,20 +116,13 @@
           </div>
 
           <div class="branch-section">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-              <strong>🌿 Séquences / variantes</strong>
-              <button class="primary" id="branch-create-btn">+ Poser une séquence à partir de ce coup</button>
-            </div>
-            <p class="muted" style="margin:6px 0 0;">Après avoir cliqué, cliquez directement sur le plateau pour poser vos pierres (Noir/Blanc alterné automatiquement, captures gérées).</p>
+            <strong>🌿 Séquences / variantes</strong>
+            <p class="muted" style="margin:6px 0 0;">Cliquez directement sur le plateau (en dehors du mode symboles) pour poser une pierre et démarrer une séquence — alternance Noir/Blanc automatique, captures gérées. Elle s'enregistre au fur et à mesure, comme sur OGS.</p>
 
-            <div id="branch-toolbar" class="branch-toolbar hidden">
-              <span class="muted">Prochaine pierre :</span>
-              <button class="marker-btn" data-color="b" title="Noir">⚫</button>
-              <button class="marker-btn" data-color="w" title="Blanc">⚪</button>
+            <div id="sequence-toolbar" class="branch-toolbar hidden">
+              <span class="muted" id="sequence-status">🌿 Séquence en cours…</span>
               <button id="branch-undo-btn" title="Annuler le dernier coup">↩ Annuler le coup</button>
-              <input id="branch-name-input" type="text" placeholder="Nom de la variante (optionnel)" style="width:200px;" />
-              <button class="primary" id="branch-save-btn">💾 Enregistrer</button>
-              <button id="branch-cancel-btn">✕ Annuler</button>
+              <button class="primary" id="sequence-done-btn">✓ Terminé</button>
             </div>
 
             <div id="branch-view-toolbar" class="branch-toolbar hidden">
@@ -219,11 +212,11 @@
     </div>
   </div>
 
-  <script src="js/sgf.js?v=5"></script>
-  <script src="js/api.js?v=5"></script>
-  <script src="js/nav.js?v=5"></script>
-  <script src="js/goban.js?v=5"></script>
-  <script src="js/room.js?v=5"></script>
-  <script src="js/game.js?v=5"></script>
+  <script src="js/sgf.js?v=6"></script>
+  <script src="js/api.js?v=6"></script>
+  <script src="js/nav.js?v=6"></script>
+  <script src="js/goban.js?v=6"></script>
+  <script src="js/room.js?v=6"></script>
+  <script src="js/game.js?v=6"></script>
 </body>
 </html>

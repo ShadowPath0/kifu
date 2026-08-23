@@ -370,6 +370,16 @@ const api = {
     return branch;
   },
 
+  async updateBranch(id, payload) {
+    const numId = Number(id);
+    const branches = loadCollection("branches");
+    const idx = branches.findIndex((b) => b.id === numId);
+    if (idx === -1) throw new Error("Branche introuvable");
+    branches[idx] = { ...branches[idx], ...payload };
+    saveCollection("branches", branches);
+    return branches[idx];
+  },
+
   async deleteBranch(id) {
     const numId = Number(id);
     saveCollection(

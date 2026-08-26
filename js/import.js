@@ -30,7 +30,40 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("submit-btn").addEventListener("click", submitGame);
+
+  const linkInput = document.getElementById("external-link");
+  linkInput.addEventListener("blur", () => tryFetchFromLink(linkInput.value.trim()));
 });
+
+async function tryFetchFromLink(url) {
+  const statusEl = document.getElementById("link-status");
+  if (!url) {
+    statusEl.textContent = "";
+    return;
+  }
+  if (sgfContent) return; // un fichier a déjà été importé, on ne l'écrase pas
+  if (!isSupportedSgfLink(url)) {
+    statusEl.textContent = "";
+    return;
+  }
+  statusEl.textContent = "Récupération du SGF depuis OGS…";
+  const fetched = await fetchSgfFromLink(url);
+  if (!fetched) {
+    statusEl.textContent = "Impossible de récupérer automatiquement le SGF depuis ce lien — la partie sera importée comme simple lien externe.";
+    return;
+  }
+  sgfContent = fetched;
+  document.getElementById("sgf-status").textContent = "SGF récupéré automatiquement depuis OGS ✓";
+  statusEl.textContent = "✓ SGF récupéré — la partie s'ouvrira directement dans Kifu avec un plateau interactif.";
+  if (!document.getElementById("f-platform").value) document.getElementById("f-platform").value = "OGS";
+  try {
+    const preview = await api.parseSgf(sgfContent);
+    fillFromPreview(preview);
+    showToast("SGF récupéré, formulaire pré-rempli");
+  } catch (_) {
+    /* on garde quand même le SGF même si le pré-remplissage échoue */
+  }
+}
 
 function handleFile(file) {
   if (!file.name.toLowerCase().endsWith(".sgf")) {

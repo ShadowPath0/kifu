@@ -117,11 +117,35 @@ function renderMeta() {
   document.getElementById("meta-summary").textContent = bits.join(" · ");
 
   const extEl = document.getElementById("meta-external");
-  extEl.innerHTML = game.external_link
-    ? `<a href="${escapeHtml(game.external_link)}" target="_blank" rel="noopener">Ouvrir la review externe ↗</a>`
-    : "";
+  if (game.external_link) {
+    const canAutoImport = !game.sgf_content && typeof isSupportedSgfLink === "function" && isSupportedSgfLink(game.external_link);
+    extEl.innerHTML =
+      `<a href="${escapeHtml(game.external_link)}" target="_blank" rel="noopener">Ouvrir la review externe ↗</a>` +
+      (canAutoImport ? ` · <button id="retro-import-btn" class="icon-btn">🔄 Importer le SGF dans Kifu</button>` : "");
+    if (canAutoImport) {
+      document.getElementById("retro-import-btn").addEventListener("click", retroImportSgf);
+    }
+  } else {
+    extEl.innerHTML = "";
+  }
 
   document.getElementById("comment-text").value = game.comment || "";
+}
+
+async function retroImportSgf() {
+  const btn = document.getElementById("retro-import-btn");
+  btn.disabled = true;
+  btn.textContent = "Récupération…";
+  const fetched = await fetchSgfFromLink(game.external_link);
+  if (!fetched) {
+    showToast("Impossible de récupérer le SGF depuis ce lien", true);
+    btn.disabled = false;
+    btn.textContent = "🔄 Importer le SGF dans Kifu";
+    return;
+  }
+  game = { ...game, ...(await api.updateGame(gameId, { sgf_content: fetched })) };
+  showToast("SGF importé — rechargement du plateau…");
+  location.reload();
 }
 
 function setupMetaEdit() {

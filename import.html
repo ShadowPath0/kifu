@@ -21,9 +21,11 @@
     </div>
 
     <div class="panel">
-      <h2>2. Ou lien de review externe</h2>
-      <label for="external-link">Lien externe (ex : review OGS)</label>
-      <input id="external-link" type="url" placeholder="https://online-go.com/review/..." />
+      <h2>2. Ou lien d'une partie/review en ligne</h2>
+      <label for="external-link">Lien (ex : partie ou review OGS)</label>
+      <input id="external-link" type="url" placeholder="https://online-go.com/game/... ou /review/..." />
+      <div id="link-status" class="muted" style="margin-top:8px;"></div>
+      <p class="muted" style="margin-top:6px;">Pour les liens OGS, le SGF est récupéré automatiquement et la partie s'ouvre directement dans Kifu avec un plateau interactif — pas de redirection. Les autres sites sont juste enregistrés comme lien externe cliquable.</p>
     </div>
 
     <div class="panel">
@@ -105,9 +107,10 @@
     </div>
   </main>
 
-  <script src="js/sgf.js?v=6"></script>
-  <script src="js/api.js?v=6"></script>
-  <script src="js/nav.js?v=6"></script>
-  <script src="js/import.js?v=6"></script>
+  <script src="js/sgf.js?v=7"></script>
+  <script src="js/link-import.js?v=7"></script>
+  <script src="js/api.js?v=7"></script>
+  <script src="js/nav.js?v=7"></script>
+  <script src="js/import.js?v=7"></script>
 </body>
 </html>

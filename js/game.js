@@ -108,7 +108,12 @@ async function loadOwnedGame() {
 function renderMeta() {
   document.getElementById("meta-title").textContent = game.title;
   const bits = [];
-  if (game.opponent_name) bits.push(`vs ${game.opponent_name}${game.opponent_rank ? " (" + game.opponent_rank + ")" : ""}`);
+  if (game.black_player || game.white_player) {
+    bits.push(`Noir : ${game.black_player || "?"} · Blanc : ${game.white_player || "?"}`);
+    if (game.opponent_rank) bits.push(`Adversaire ${game.opponent_rank}`);
+  } else if (game.opponent_name) {
+    bits.push(`vs ${game.opponent_name}${game.opponent_rank ? " (" + game.opponent_rank + ")" : ""}`);
+  }
   if (game.date_played) bits.push(game.date_played);
   if (game.user_color) bits.push(`Vous jouiez ${COLOR_LABEL[game.user_color]}${game.user_rank_at_time ? " — " + game.user_rank_at_time : ""}`);
   if (game.result) bits.push(`Résultat : ${game.result}`);
@@ -626,6 +631,7 @@ function setupBoardControls() {
     branchViewIndex = branchViewStates.length - 1;
     renderBranchView();
   });
+  document.getElementById("move-tree-wrap").addEventListener("click", handleMoveTreeClick);
 }
 
 function navigateTo(i) {
@@ -738,6 +744,17 @@ function symbolMarkersFor(i) {
   return markers.filter((m) => m.move_number === i);
 }
 
+let listRenderQueued = false;
+function scheduleListRender() {
+  if (listRenderQueued) return;
+  listRenderQueued = true;
+  requestAnimationFrame(() => {
+    listRenderQueued = false;
+    renderErrorList();
+    renderBranchesList();
+  });
+}
+
 function setMoveIndex(i) {
   currentMoveIndex = i;
   document.getElementById("ctl-slider").value = i;
@@ -746,8 +763,14 @@ function setMoveIndex(i) {
     i === 0 ? "Coup 0 (position initiale)" : `Coup ${i} — ${move.color === "b" ? "Noir" : "Blanc"}${move.pass ? " (passe)" : ""}`;
 
   goban.draw(boardData.states[i], move, errorRingMarkers(i), suggestionMarkersFor(i), symbolMarkersFor(i));
-  renderErrorList();
-  renderBranchesList();
+  // Le rendu de la liste d'erreurs et de l'arbre des variantes reconstruit du DOM/SVG
+  // en entier (potentiellement des centaines d'éléments sur une longue partie). En
+  // rafale de touches (flèches maintenues), ça sature le thread principal et le
+  // navigateur ne peut peindre que l'état final : les coups intermédiaires semblent
+  // "sautés" à l'écran alors que la logique interne est correcte. On repousse donc
+  // ce rendu lourd à la prochaine frame et on le fusionne si plusieurs coups
+  // s'enchaînent avant qu'elle n'arrive.
+  scheduleListRender();
 }
 
 // ---------- branches / variantes (poser des pierres façon OGS) ----------
@@ -775,6 +798,114 @@ function renderBranchesList() {
       deleteBranch(parseInt(btn.dataset.delBranch, 10));
     });
   });
+  renderMoveTree();
+}
+
+// ---------- arbre des variantes (façon OGS) ----------
+
+function layoutBranchLanes(branchList) {
+  const sorted = [...branchList].sort((a, b) => a.anchor_move_number - b.anchor_move_number);
+  const laneEnds = []; // laneEnds[i] = dernière colonne occupée dans cette lane
+  const placed = [];
+  for (const b of sorted) {
+    const startCol = b.anchor_move_number;
+    const endCol = b.anchor_move_number + b.moves.length;
+    let lane = laneEnds.findIndex((end) => end < startCol);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(endCol);
+    } else {
+      laneEnds[lane] = endCol;
+    }
+    placed.push({ branch: b, lane });
+  }
+  return { placed, laneCount: laneEnds.length };
+}
+
+function renderMoveTree() {
+  const wrap = document.getElementById("move-tree-wrap");
+  if (!wrap || !boardData) return;
+
+  const moveCount = boardData.states.length - 1;
+  const xStep = 15;
+  const marginX = 12;
+  const mainY = 14;
+  const laneGap = 18;
+  const r = 5;
+  const rSmall = 4;
+
+  const { placed, laneCount } = layoutBranchLanes(branches);
+
+  const width = marginX * 2 + (moveCount + 1) * xStep + Math.max(0, ...placed.map((p) => (p.branch.moves.length + 1) * xStep));
+  const height = mainY + (laneCount > 0 ? laneCount * laneGap + 14 : 10);
+
+  const colX = (col) => marginX + col * xStep;
+
+  let svg = `<svg width="${Math.max(width, 200)}" height="${height}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
+
+  // ligne principale
+  svg += `<line x1="${colX(0)}" y1="${mainY}" x2="${colX(moveCount)}" y2="${mainY}" stroke="#a97c3a" stroke-width="2" />`;
+
+  const viewingAnchor = branchMode === "viewing" && viewingBranch ? viewingBranch.anchor_move_number : null;
+
+  for (let i = 0; i <= moveCount; i++) {
+    const x = colX(i);
+    const mv = boardData.moves[i];
+    const isCurrent = branchMode !== "viewing" && i === currentMoveIndex;
+    const isAnchorOfViewed = i === viewingAnchor;
+    let fill = "#f5f3ee";
+    if (mv && !mv.pass) fill = mv.color === "b" ? "#0a0a0a" : "#ffffff";
+    const stroke = mv && !mv.pass && mv.color === "w" ? "#00000055" : "#a97c3a";
+    svg += `<circle cx="${x}" cy="${mainY}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1" data-jump="${i}" style="cursor:pointer;">`;
+    svg += `<title>Coup ${i}${mv && mv.pass ? " (passe)" : ""}</title></circle>`;
+    if (isCurrent || isAnchorOfViewed) {
+      svg += `<circle cx="${x}" cy="${mainY}" r="${r + 3}" fill="none" stroke="#6366f1" stroke-width="2" />`;
+    }
+  }
+
+  for (const { branch, lane } of placed) {
+    const y = mainY + laneGap * (lane + 1);
+    const startX = colX(branch.anchor_move_number);
+    const endX = colX(branch.anchor_move_number + branch.moves.length);
+    const isViewingThis = branchMode === "viewing" && viewingBranch && viewingBranch.id === branch.id;
+
+    svg += `<line x1="${startX}" y1="${mainY + r}" x2="${startX}" y2="${y}" stroke="#22c55e" stroke-width="1.5" />`;
+    svg += `<line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" stroke="#22c55e" stroke-width="1.5" data-view-branch="${branch.id}" style="cursor:pointer;" />`;
+
+    branch.moves.forEach((mv, j) => {
+      const x = colX(branch.anchor_move_number + j + 1);
+      const fill = mv.color === "b" ? "#0a0a0a" : "#ffffff";
+      const isCurrentInBranch = isViewingThis && branchViewIndex === j + 1;
+      svg += `<circle cx="${x}" cy="${y}" r="${rSmall}" fill="${fill}" stroke="#22c55e" stroke-width="1" data-view-branch="${branch.id}" data-branch-index="${j + 1}" style="cursor:pointer;">`;
+      svg += `<title>${escapeHtml(branch.name)} — coup ${j + 1}</title></circle>`;
+      if (isCurrentInBranch) {
+        svg += `<circle cx="${x}" cy="${y}" r="${rSmall + 3}" fill="none" stroke="#6366f1" stroke-width="2" />`;
+      }
+    });
+
+    svg += `<text x="${endX + 6}" y="${y + 3}" font-size="10" fill="#166534" data-view-branch="${branch.id}" style="cursor:pointer;">${escapeHtml(branch.name)}</text>`;
+  }
+
+  svg += `</svg>`;
+  wrap.innerHTML = svg;
+}
+
+function handleMoveTreeClick(e) {
+  const jumpEl = e.target.closest("[data-jump]");
+  if (jumpEl) {
+    navigateTo(parseInt(jumpEl.dataset.jump, 10));
+    return;
+  }
+  const branchEl = e.target.closest("[data-view-branch]");
+  if (branchEl) {
+    const branch = branches.find((b) => b.id === parseInt(branchEl.dataset.viewBranch, 10));
+    if (!branch) return;
+    enterBranchView(branch);
+    if (branchEl.dataset.branchIndex) {
+      branchViewIndex = parseInt(branchEl.dataset.branchIndex, 10);
+      renderBranchView();
+    }
+  }
 }
 
 // Clic direct sur le plateau = pose une pierre de séquence (façon OGS). Démarre

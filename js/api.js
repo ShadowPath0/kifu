@@ -162,6 +162,8 @@ const api = {
       platform: null,
       result: null,
       comment: null,
+      black_player: null,
+      white_player: null,
       ...payload,
       title,
       created_at: nowIso(),

@@ -1,4 +1,6 @@
 let sgfContent = null;
+let sgfBlackPlayer = null;
+let sgfWhitePlayer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   renderNav("import");
@@ -30,6 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("submit-btn").addEventListener("click", submitGame);
+
+  document.getElementById("f-color").addEventListener("change", (e) => {
+    if (!sgfBlackPlayer && !sgfWhitePlayer) return;
+    const opponent = e.target.value === "black" ? sgfWhitePlayer : e.target.value === "white" ? sgfBlackPlayer : null;
+    if (opponent) document.getElementById("f-opponent").value = opponent;
+  });
 
   const linkInput = document.getElementById("external-link");
   linkInput.addEventListener("blur", () => tryFetchFromLink(linkInput.value.trim()));
@@ -92,6 +100,8 @@ function fillFromPreview(p) {
   if (p.opponent_name) document.getElementById("f-opponent").value = p.opponent_name;
   if (p.result) document.getElementById("f-result").value = p.result;
   if (p.komi !== null && p.komi !== undefined) document.getElementById("f-komi").value = p.komi;
+  sgfBlackPlayer = p.black_player || null;
+  sgfWhitePlayer = p.white_player || null;
 }
 
 async function submitGame() {
@@ -114,6 +124,8 @@ async function submitGame() {
     comment: document.getElementById("f-comment").value || null,
     external_link: document.getElementById("external-link").value || null,
     sgf_content: sgfContent,
+    black_player: sgfBlackPlayer,
+    white_player: sgfWhitePlayer,
   };
 
   try {

@@ -547,16 +547,30 @@ function setupBoardControls() {
   slider.max = boardData.states.length - 1;
   slider.addEventListener("input", () => navigateTo(parseInt(slider.value, 10)));
   document.getElementById("ctl-first").addEventListener("click", () => navigateTo(0));
-  document.getElementById("ctl-prev").addEventListener("click", () => navigateTo(Math.max(0, currentMoveIndex - 1)));
-  document
-    .getElementById("ctl-next")
-    .addEventListener("click", () => navigateTo(Math.min(boardData.states.length - 1, currentMoveIndex + 1)));
+  document.getElementById("ctl-prev").addEventListener("click", () => stepMove(-1));
+  document.getElementById("ctl-next").addEventListener("click", () => stepMove(1));
   document.getElementById("ctl-last").addEventListener("click", () => navigateTo(boardData.states.length - 1));
+  document.addEventListener("keydown", (e) => {
+    if (!boardData) return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      stepMove(-1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      stepMove(1);
+    }
+  });
   document.getElementById("ctl-jump").addEventListener("change", (e) => {
     const n = parseInt(e.target.value, 10);
     if (!isNaN(n)) navigateTo(Math.max(0, Math.min(boardData.states.length - 1, n)));
   });
   document.getElementById("goban-canvas").addEventListener("click", (e) => {
+    if (e.shiftKey) {
+      handleShiftClickJump(e);
+      return;
+    }
     if (branchMode === "viewing") return;
     if (!guardController()) return;
     if (pickingMode) {
@@ -612,6 +626,49 @@ function navigateTo(i) {
   if (branchMode === "viewing") exitBranchView();
   setMoveIndex(i);
   if (Room.active) Room.send("sync:move", { moveIndex: i });
+}
+
+// ◀/▶ et flèches clavier : contextuels. En train de composer une séquence,
+// "précédent" annule juste le dernier coup posé (au lieu de tout quitter).
+// En train de regarder une variante enregistrée, on avance/recule DANS la
+// variante — revenir avant son premier coup en ressort naturellement vers la
+// ligne principale, au lieu de faire disparaître toute la variante d'un coup.
+function stepMove(delta) {
+  if (!guardController()) return;
+  if (branchMode === "creating") {
+    if (delta < 0) undoBranchMove();
+    return;
+  }
+  if (branchMode === "viewing") {
+    const target = branchViewIndex + delta;
+    if (target < 0) {
+      exitBranchView();
+      return;
+    }
+    branchViewIndex = Math.max(0, Math.min(branchViewStates.length - 1, target));
+    renderBranchView();
+    return;
+  }
+  navigateTo(Math.max(0, Math.min(boardData.states.length - 1, currentMoveIndex + delta)));
+}
+
+// Shift + clic sur une pierre visible = saute directement au coup où elle a
+// été jouée (recherche du coup le plus récent à ce point, en remontant depuis
+// la position actuelle).
+function handleShiftClickJump(clickEvent) {
+  if (!boardData || !guardController()) return;
+  const pos = goban.pixelToPos(clickEvent.offsetX, clickEvent.offsetY);
+  if (!pos) return;
+  const fromIndex = branchMode === "viewing" ? viewingBranch.anchor_move_number : currentMoveIndex;
+  for (let i = fromIndex; i >= 1; i--) {
+    const mv = boardData.moves[i];
+    if (mv && !mv.pass && mv.row === pos.row && mv.col === pos.col) {
+      if (branchMode === "viewing") exitBranchView();
+      navigateTo(i);
+      return;
+    }
+  }
+  showToast("Aucun coup à ce point avant la position actuelle", true);
 }
 
 function updateMarkerToolbarUI() {

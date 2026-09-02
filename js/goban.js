@@ -124,6 +124,27 @@ class Goban {
       ctx.fill();
     }
 
+    // bandeau "PASSE" bien visible : un clic sur ce coup ne change rien sur le
+    // plateau, sans ce bandeau on pourrait croire qu'un coup a été sauté.
+    if (lastMove && lastMove.pass) {
+      const cx = this.canvasSize / 2;
+      const cy = this.margin + (this.canvasSize - 2 * this.margin) * 0.5;
+      const label = `${lastMove.color === "b" ? "Noir" : "Blanc"} passe`;
+      ctx.font = "bold 20px sans-serif";
+      const textWidth = ctx.measureText(label).width;
+      const paddingX = 18;
+      const boxW = textWidth + paddingX * 2;
+      const boxH = 40;
+      ctx.fillStyle = "rgba(20,18,12,0.82)";
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH, 8) : ctx.rect(cx - boxW / 2, cy - boxH / 2, boxW, boxH);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, cx, cy + 1);
+    }
+
     // error markers
     for (const m of markers || []) {
       const [x, y] = this.posToPixel(m.row, m.col);

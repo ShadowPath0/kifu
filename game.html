@@ -127,9 +127,17 @@
               <button class="marker-btn" data-symbol="erase" title="Effacer un symbole">⌫</button>
               <span id="marker-active-label" class="muted"></span>
             </div>
-            <div class="modal-actions" style="justify-content:flex-start;">
-              <button class="primary" id="annotate-btn">Marquer une erreur sur ce coup</button>
+            <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="severity-picker" id="quick-severity-picker">
+                <button type="button" data-sev="mineure">Mineure</button>
+                <button type="button" data-sev="moyenne">Moyenne</button>
+                <button type="button" data-sev="critique">Critique</button>
+              </div>
+              <select id="quick-tag-select" style="flex:1;min-width:160px;">
+                <option value="" selected disabled>+ Annoter ce coup…</option>
+              </select>
             </div>
+            <button id="annotate-btn" class="link-btn" type="button">Erreur détaillée (note, coups conseillés, phase…)</button>
 
             <div class="branch-section">
               <strong>🌿 Séquences / variantes</strong>
@@ -219,12 +227,12 @@
     </div>
   </div>
 
-  <script src="js/sgf.js?v=13"></script>
-  <script src="js/link-import.js?v=13"></script>
-  <script src="js/api.js?v=13"></script>
-  <script src="js/nav.js?v=13"></script>
-  <script src="js/goban.js?v=13"></script>
-  <script src="js/room.js?v=13"></script>
-  <script src="js/game.js?v=13"></script>
+  <script src="js/sgf.js?v=14"></script>
+  <script src="js/link-import.js?v=14"></script>
+  <script src="js/api.js?v=14"></script>
+  <script src="js/nav.js?v=14"></script>
+  <script src="js/goban.js?v=14"></script>
+  <script src="js/room.js?v=14"></script>
+  <script src="js/game.js?v=14"></script>
 </body>
 </html>

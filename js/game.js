@@ -222,6 +222,56 @@ function setupComment() {
 function populateCategorySelect() {
   const sel = document.getElementById("am-category");
   sel.innerHTML = categories.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  renderQuickTagRow();
+}
+
+// ---------- tag rapide (1 clic, sans modal) ----------
+
+let quickTagSeverity = "moyenne";
+
+function renderQuickTagRow() {
+  const el = document.getElementById("quick-tag-select");
+  if (!el) return;
+  el.innerHTML =
+    `<option value="" selected disabled>+ Annoter ce coup…</option>` +
+    categories.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+}
+
+function updateSeverityPickerUI() {
+  document.querySelectorAll("#quick-severity-picker button").forEach((b) => {
+    b.classList.toggle("active", b.dataset.sev === quickTagSeverity);
+  });
+}
+
+async function submitNewError(payload) {
+  if (Room.active && !Room.isOwner) {
+    Room.send("intent:create-error", payload);
+    showToast("Envoyé à l'hôte…");
+    return null;
+  }
+  const created = await api.createGameError(gameId, payload);
+  errors.push(created);
+  if (Room.active) Room.send("sync:error-created", { error: created });
+  return created;
+}
+
+async function quickTagCurrentMove(categoryId) {
+  if (!guardController()) return;
+  const payload = {
+    category_id: categoryId,
+    move_number: currentMoveIndex,
+    phase: suggestPhase(currentMoveIndex),
+    severity: quickTagSeverity,
+    note: null,
+    suggested_moves: [],
+  };
+  try {
+    await submitNewError(payload);
+    if (boardData) setMoveIndex(currentMoveIndex);
+    showToast("Erreur annotée");
+  } catch (err) {
+    showToast("Erreur : " + err.message, true);
+  }
 }
 
 // ---------- salle de review partagée ----------
@@ -600,6 +650,18 @@ function setupBoardControls() {
   document.getElementById("annotate-btn").addEventListener("click", () => {
     if (!guardController()) return;
     openAnnotateModal(currentMoveIndex);
+  });
+  document.querySelectorAll("#quick-severity-picker button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      quickTagSeverity = btn.dataset.sev;
+      updateSeverityPickerUI();
+    });
+  });
+  updateSeverityPickerUI();
+  document.getElementById("quick-tag-select").addEventListener("change", (e) => {
+    const categoryId = parseInt(e.target.value, 10);
+    e.target.value = "";
+    if (!isNaN(categoryId)) quickTagCurrentMove(categoryId);
   });
   document.getElementById("am-pick-suggestions-btn").addEventListener("click", startPickingSuggestions);
   document.getElementById("picking-done-btn").addEventListener("click", finishPickingSuggestions);
@@ -1237,9 +1299,7 @@ async function saveAnnotation() {
       if (idx !== -1) errors[idx] = updated;
       if (Room.active) Room.send("sync:error-updated", { error: updated });
     } else {
-      const created = await api.createGameError(gameId, payload);
-      errors.push(created);
-      if (Room.active) Room.send("sync:error-created", { error: created });
+      await submitNewError(payload);
     }
     closeAnnotateModal();
     pendingSuggestedMoves = [];
@@ -1273,18 +1333,15 @@ async function deleteAnnotation(id) {
 
 function errorItemHtml(e) {
   const suggestions = e.suggested_moves || [];
-  const suggestionLine = suggestions.length
-    ? `<div class="muted">📍 recommandé : ${suggestions.map((p) => formatCoord(p.row, p.col)).join(", ")}</div>`
-    : "";
+  const titleBits = [`${PHASE_LABEL[e.phase]} · ${e.severity}`];
+  if (suggestions.length) titleBits.push(`Recommandé : ${suggestions.map((p) => formatCoord(p.row, p.col)).join(", ")}`);
+  if (e.note) titleBits.push(e.note);
   return `
-    <div class="error-item" data-move="${e.move_number}">
+    <div class="error-item" data-move="${e.move_number}" title="${escapeHtml(titleBits.join(" — "))}">
       <span class="move-no">#${e.move_number}</span>
-      <span class="color-swatch" style="background:${e.category.color}"></span>
-      <div style="flex:1;">
-        <div>${escapeHtml(e.category.name)}</div>
-        <div class="muted">${PHASE_LABEL[e.phase]} · <span class="sev-dot sev-${e.severity}"></span> ${e.severity}</div>
-        ${suggestionLine}
-      </div>
+      <span class="dot" style="background:${e.category.color}"></span>
+      <span class="error-item-label">${escapeHtml(e.category.name)}</span>
+      <span class="sev-dot sev-${e.severity}"></span>
       <button class="icon-btn" data-edit="${e.id}">✏️</button>
       <button class="icon-btn danger" data-del="${e.id}">✕</button>
     </div>`;

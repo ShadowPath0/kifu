@@ -888,6 +888,14 @@ function renderMoveTree() {
 
   svg += `</svg>`;
   wrap.innerHTML = svg;
+
+  // Fait suivre le scroll horizontal de l'arbre sur le coup courant (comme OGS),
+  // sinon sur une longue partie il faut chercher la position à la main à chaque coup.
+  const targetX =
+    branchMode === "viewing" && viewingBranch
+      ? colX(viewingBranch.anchor_move_number + branchViewIndex)
+      : colX(currentMoveIndex);
+  wrap.scrollLeft = Math.max(0, Math.min(wrap.scrollWidth - wrap.clientWidth, targetX - wrap.clientWidth / 2));
 }
 
 function handleMoveTreeClick(e) {

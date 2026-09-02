@@ -346,6 +346,7 @@ tbody tr {
 .review-board-col {
   flex: 2 1 480px;
   min-width: 320px;
+  max-width: 100%;
 }
 
 .sidebar-comment {
@@ -402,6 +403,7 @@ tbody tr {
   padding: 6px 4px;
   overflow-x: auto;
   border-top: 1px solid var(--border);
+  max-width: 100%;
 }
 
 .move-tree-wrap svg {

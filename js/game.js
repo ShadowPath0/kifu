@@ -84,6 +84,7 @@ async function loadOwnedGame() {
       markers = await api.listMarkers(gameId);
       branches = await api.listBranches(gameId);
       document.getElementById("goban-section").classList.remove("hidden");
+      document.getElementById("sgf-sidebar-tools").classList.remove("hidden");
       document.getElementById("share-room-btn").classList.remove("hidden");
       goban = new Goban(document.getElementById("goban-canvas"), boardData.size);
       setupBoardControls();
@@ -310,6 +311,7 @@ function applySnapshot(data) {
   if (game.sgf_content) {
     boardData = computeBoardStates(game.sgf_content);
     document.getElementById("goban-section").classList.remove("hidden");
+    document.getElementById("sgf-sidebar-tools").classList.remove("hidden");
     goban = new Goban(document.getElementById("goban-canvas"), boardData.size);
     setupBoardControls();
     setMoveIndex(data.currentMoveIndex);

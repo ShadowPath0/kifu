@@ -82,87 +82,92 @@
     <div class="panel" id="board-panel">
       <div id="no-sgf-msg" class="muted hidden">Cette partie n'a pas de contenu SGF (import par lien externe ou saisie manuelle) : pas de goban interactif disponible. Vous pouvez tout de même annoter des erreurs par numéro de coup ci-dessous.</div>
 
-      <div id="goban-section" class="goban-wrap hidden">
-        <div>
-          <div id="picking-banner" class="picking-banner hidden">
-            Cliquez sur le plateau pour indiquer le(s) coup(s) recommandé(s) (position juste avant le coup joué). Cliquez à nouveau sur un point pour le retirer.
-            <button class="primary" id="picking-done-btn">Terminé</button>
-          </div>
-          <canvas id="goban-canvas"></canvas>
-          <div class="goban-controls">
-            <button id="ctl-first" class="icon-btn">⏮</button>
-            <button id="ctl-prev" class="icon-btn">◀</button>
-            <input id="ctl-slider" type="range" min="0" max="0" value="0" />
-            <button id="ctl-next" class="icon-btn">▶</button>
-            <button id="ctl-last" class="icon-btn">⏭</button>
-            <input id="ctl-jump" type="number" min="0" style="width:70px;" placeholder="coup n°" />
-          </div>
-          <div id="ctl-move-label" class="muted" style="margin-top:6px;">Coup 0 (position initiale)</div>
-          <div class="muted" style="font-size:0.78rem;">⌨ Flèches (←↑ précédent, →↓ suivant) · Début/Fin (premier/dernier coup) · Échap (annuler/sortir) · Shift + clic sur une pierre (sauter à son coup)</div>
-
-          <div class="marker-toolbar">
-            <span class="muted" style="margin-right:4px;">Symboles :</span>
-            <button class="marker-btn" data-symbol="triangle" title="Triangle">△</button>
-            <button class="marker-btn" data-symbol="square" title="Carré">□</button>
-            <button class="marker-btn" data-symbol="circle" title="Cercle">○</button>
-            <button class="marker-btn" data-symbol="cross" title="Croix">✕</button>
-            <button class="marker-btn" data-symbol="letter" title="Lettre (A, B, C...)">Abc</button>
-            <button class="marker-btn" data-symbol="number" title="Chiffre (1, 2, 3...)">123</button>
-            <button class="marker-btn" data-symbol="erase" title="Effacer un symbole">⌫</button>
-            <span id="marker-active-label" class="muted"></span>
-          </div>
-
-          <div class="modal-actions" style="justify-content:flex-start;">
-            <button class="primary" id="annotate-btn">Marquer une erreur sur ce coup</button>
-          </div>
-
-          <div class="branch-section">
-            <strong>🌿 Séquences / variantes</strong>
-            <p class="muted" style="margin:6px 0 0;">Cliquez directement sur le plateau (en dehors du mode symboles) pour poser une pierre et démarrer une séquence — alternance Noir/Blanc automatique, captures gérées. Elle s'enregistre au fur et à mesure, comme sur OGS.</p>
-
-            <div id="sequence-toolbar" class="branch-toolbar hidden">
-              <span class="muted" id="sequence-status">🌿 Séquence en cours…</span>
-              <button id="branch-undo-btn" title="Annuler le dernier coup">↩ Annuler le coup</button>
-              <button class="primary" id="sequence-done-btn">✓ Terminé</button>
+      <div class="goban-wrap">
+        <div class="review-board-col">
+          <div id="goban-section" class="hidden">
+            <div id="picking-banner" class="picking-banner hidden">
+              Cliquez sur le plateau pour indiquer le(s) coup(s) recommandé(s) (position juste avant le coup joué). Cliquez à nouveau sur un point pour le retirer.
+              <button class="primary" id="picking-done-btn">Terminé</button>
             </div>
-
-            <div id="branch-view-toolbar" class="branch-toolbar hidden">
-              <strong id="branch-view-name"></strong>
-              <button id="branch-view-first" class="icon-btn">⏮</button>
-              <button id="branch-view-prev" class="icon-btn">◀</button>
-              <button id="branch-view-next" class="icon-btn">▶</button>
-              <button id="branch-view-last" class="icon-btn">⏭</button>
-              <button id="branch-view-exit">✕ Quitter la branche</button>
+            <canvas id="goban-canvas"></canvas>
+            <div class="goban-controls">
+              <button id="ctl-first" class="icon-btn">⏮</button>
+              <button id="ctl-prev" class="icon-btn">◀</button>
+              <input id="ctl-slider" type="range" min="0" max="0" value="0" />
+              <button id="ctl-next" class="icon-btn">▶</button>
+              <button id="ctl-last" class="icon-btn">⏭</button>
+              <input id="ctl-jump" type="number" min="0" style="width:70px;" placeholder="coup n°" />
             </div>
-
-            <div id="branches-list" class="chip-row" style="margin-top:8px;"></div>
+            <div id="ctl-move-label" class="muted" style="margin-top:6px;">Coup 0 (position initiale)</div>
+            <div class="muted" style="font-size:0.78rem;">⌨ Flèches (←↑ précédent, →↓ suivant) · Début/Fin (premier/dernier coup) · Échap (annuler/sortir) · Shift + clic sur une pierre (sauter à son coup)</div>
           </div>
         </div>
+
         <div class="error-sidebar">
-          <h3>Erreurs de la partie</h3>
-          <div id="error-list"></div>
-        </div>
-      </div>
+          <div class="sidebar-comment">
+            <h3>Commentaire libre</h3>
+            <p class="muted" style="margin:-6px 0 8px;font-size:0.78rem;">Impressions générales, plan de jeu prévu vs réel...</p>
+            <textarea id="comment-text" rows="5"></textarea>
+            <div class="modal-actions" style="justify-content:flex-start;margin-top:8px;">
+              <button class="primary" id="comment-save-btn">Enregistrer</button>
+            </div>
+          </div>
 
-      <div id="manual-error-section" class="hidden">
-        <h3>Erreurs de la partie</h3>
-        <div id="error-list-manual"></div>
-        <div class="field-row">
-          <div><label>Numéro de coup</label><input id="manual-move-number" type="number" min="0" value="0" /></div>
-          <div></div>
-        </div>
-        <div class="modal-actions" style="justify-content:flex-start;">
-          <button class="primary" id="annotate-manual-btn">Ajouter une erreur</button>
-        </div>
-      </div>
-    </div>
+          <div id="sgf-sidebar-tools" class="hidden">
+            <h3>Annoter ce coup</h3>
+            <div class="marker-toolbar">
+              <span class="muted" style="margin-right:4px;">Symboles :</span>
+              <button class="marker-btn" data-symbol="triangle" title="Triangle">△</button>
+              <button class="marker-btn" data-symbol="square" title="Carré">□</button>
+              <button class="marker-btn" data-symbol="circle" title="Cercle">○</button>
+              <button class="marker-btn" data-symbol="cross" title="Croix">✕</button>
+              <button class="marker-btn" data-symbol="letter" title="Lettre (A, B, C...)">Abc</button>
+              <button class="marker-btn" data-symbol="number" title="Chiffre (1, 2, 3...)">123</button>
+              <button class="marker-btn" data-symbol="erase" title="Effacer un symbole">⌫</button>
+              <span id="marker-active-label" class="muted"></span>
+            </div>
+            <div class="modal-actions" style="justify-content:flex-start;">
+              <button class="primary" id="annotate-btn">Marquer une erreur sur ce coup</button>
+            </div>
 
-    <div class="panel">
-      <h2>Commentaire libre</h2>
-      <p class="muted">Impressions générales, plan de jeu prévu vs réel, ce qu'il fallait faire différemment stratégiquement.</p>
-      <textarea id="comment-text" rows="8"></textarea>
-      <div class="modal-actions" style="justify-content:flex-start;">
-        <button class="primary" id="comment-save-btn">Enregistrer le commentaire</button>
+            <div class="branch-section">
+              <strong>🌿 Séquences / variantes</strong>
+              <p class="muted" style="margin:6px 0 0;font-size:0.78rem;">Cliquez directement sur le plateau (hors mode symboles) pour poser une pierre et démarrer une séquence — enregistrement automatique, comme sur OGS.</p>
+
+              <div id="sequence-toolbar" class="branch-toolbar hidden">
+                <span class="muted" id="sequence-status">🌿 Séquence en cours…</span>
+                <button id="branch-undo-btn" title="Annuler le dernier coup">↩ Annuler</button>
+                <button class="primary" id="sequence-done-btn">✓ Terminé</button>
+              </div>
+
+              <div id="branch-view-toolbar" class="branch-toolbar hidden">
+                <strong id="branch-view-name"></strong>
+                <button id="branch-view-first" class="icon-btn">⏮</button>
+                <button id="branch-view-prev" class="icon-btn">◀</button>
+                <button id="branch-view-next" class="icon-btn">▶</button>
+                <button id="branch-view-last" class="icon-btn">⏭</button>
+                <button id="branch-view-exit">✕ Quitter</button>
+              </div>
+
+              <div id="branches-list" class="chip-row" style="margin-top:8px;"></div>
+            </div>
+
+            <h3>Erreurs de la partie</h3>
+            <div id="error-list"></div>
+          </div>
+
+          <div id="manual-error-section" class="hidden">
+            <h3>Erreurs de la partie</h3>
+            <div id="error-list-manual"></div>
+            <div class="field-row">
+              <div><label>Numéro de coup</label><input id="manual-move-number" type="number" min="0" value="0" /></div>
+              <div></div>
+            </div>
+            <div class="modal-actions" style="justify-content:flex-start;">
+              <button class="primary" id="annotate-manual-btn">Ajouter une erreur</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -213,12 +218,12 @@
     </div>
   </div>
 
-  <script src="js/sgf.js?v=9"></script>
-  <script src="js/link-import.js?v=9"></script>
-  <script src="js/api.js?v=9"></script>
-  <script src="js/nav.js?v=9"></script>
-  <script src="js/goban.js?v=9"></script>
-  <script src="js/room.js?v=9"></script>
-  <script src="js/game.js?v=9"></script>
+  <script src="js/sgf.js?v=10"></script>
+  <script src="js/link-import.js?v=10"></script>
+  <script src="js/api.js?v=10"></script>
+  <script src="js/nav.js?v=10"></script>
+  <script src="js/goban.js?v=10"></script>
+  <script src="js/room.js?v=10"></script>
+  <script src="js/game.js?v=10"></script>
 </body>
 </html>

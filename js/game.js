@@ -554,12 +554,21 @@ function setupBoardControls() {
     if (!boardData) return;
     const tag = document.activeElement && document.activeElement.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-    if (e.key === "ArrowLeft") {
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
       stepMove(-1);
-    } else if (e.key === "ArrowRight") {
+    } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
       stepMove(1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      navigateTo(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      navigateTo(boardData.states.length - 1);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleEscape();
     }
   });
   document.getElementById("ctl-jump").addEventListener("change", (e) => {
@@ -669,6 +678,32 @@ function handleShiftClickJump(clickEvent) {
     }
   }
   showToast("Aucun coup à ce point avant la position actuelle", true);
+}
+
+// Échap : sort proprement de quoi que ce soit soit en cours (modal, mode
+// symbole, coup recommandé, composition/visualisation de séquence), du plus
+// "au-dessus" au plus "en-dessous".
+function handleEscape() {
+  if (pickingMode) {
+    finishPickingSuggestions();
+    return;
+  }
+  if (!document.getElementById("annotate-modal").classList.contains("hidden")) {
+    closeAnnotateModal();
+    return;
+  }
+  if (markerTool) {
+    markerTool = null;
+    updateMarkerToolbarUI();
+    return;
+  }
+  if (branchMode === "creating") {
+    finishSequence();
+    return;
+  }
+  if (branchMode === "viewing") {
+    exitBranchView();
+  }
 }
 
 function updateMarkerToolbarUI() {

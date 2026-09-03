@@ -58,7 +58,7 @@ class Goban {
     return { row, col };
   }
 
-  draw(stones, lastMove, markers, suggestions, symbols) {
+  draw(stones, lastMove, markers, suggestions, symbols, moveNumbers) {
     const ctx = this.ctx;
     const s = this.canvasSize;
     ctx.clearRect(0, 0, s, s);
@@ -115,13 +115,25 @@ class Goban {
       ctx.stroke();
     }
 
-    // last move marker
-    if (lastMove && !lastMove.pass) {
+    // last move marker (seulement si on n'affiche pas déjà les numéros d'ordre —
+    // sinon le numéro du dernier coup remplace ce simple point)
+    if (lastMove && !lastMove.pass && !(moveNumbers && moveNumbers.length)) {
       const [x, y] = this.posToPixel(lastMove.row, lastMove.col);
       ctx.beginPath();
       ctx.arc(x, y, radius * 0.4, 0, Math.PI * 2);
       ctx.fillStyle = lastMove.color === "b" ? "#ffffff" : "#000000";
       ctx.fill();
+    }
+
+    // numéros d'ordre des coups d'une variante, façon OGS
+    for (const mn of moveNumbers || []) {
+      const [x, y] = this.posToPixel(mn.row, mn.col);
+      const stone = stones.find((s) => s.row === mn.row && s.col === mn.col);
+      ctx.fillStyle = stone && stone.color === "b" ? "#ffffff" : "#000000";
+      ctx.font = `bold ${Math.round(radius * 0.85)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(mn.number), x, y + 1);
     }
 
     // bandeau "PASSE" bien visible : un clic sur ce coup ne change rien sur le

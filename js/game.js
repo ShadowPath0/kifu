@@ -1061,7 +1061,8 @@ function redrawBranchDraft() {
   const lastMv = branchDraftMoves.length
     ? branchDraftMoves[branchDraftMoves.length - 1]
     : boardData.moves[branchAnchorIndex];
-  goban.draw(stones, lastMv, [], [], []);
+  const moveNumbers = branchDraftMoves.map((mv, i) => ({ row: mv.row, col: mv.col, number: i + 1 }));
+  goban.draw(stones, lastMv, [], [], [], moveNumbers);
   document.getElementById("ctl-move-label").textContent = `🌿 Séquence en cours — coup ${branchDraftMoves.length + 1} (${
     branchNextColor === "b" ? "Noir" : "Blanc"
   } à jouer)`;
@@ -1074,7 +1075,8 @@ function redrawRemoteDraft() {
   const lastMv = remoteDraftMoves.length
     ? remoteDraftMoves[remoteDraftMoves.length - 1]
     : boardData.moves[remoteDraftAnchor];
-  goban.draw(stones, lastMv, [], [], []);
+  const moveNumbers = remoteDraftMoves.map((mv, i) => ({ row: mv.row, col: mv.col, number: i + 1 }));
+  goban.draw(stones, lastMv, [], [], [], moveNumbers);
   const controllerName = (lastParticipants.find((p) => p.id === Room.controllerId) || {}).name || "L'hôte";
   document.getElementById("ctl-move-label").textContent = `🌿 ${controllerName} compose une séquence en direct… (coup ${remoteDraftMoves.length})`;
 }
@@ -1115,7 +1117,8 @@ function enterBranchView(branch) {
 function renderBranchView() {
   const move =
     branchViewIndex > 0 ? viewingBranch.moves[branchViewIndex - 1] : boardData.moves[viewingBranch.anchor_move_number];
-  goban.draw(branchViewStates[branchViewIndex], move, [], [], []);
+  const moveNumbers = viewingBranch.moves.slice(0, branchViewIndex).map((mv, i) => ({ row: mv.row, col: mv.col, number: i + 1 }));
+  goban.draw(branchViewStates[branchViewIndex], move, [], [], [], moveNumbers);
   document.getElementById("ctl-move-label").textContent = `🌿 ${viewingBranch.name} — coup ${branchViewIndex} / ${viewingBranch.moves.length}`;
   scheduleListRender();
 }

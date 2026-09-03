@@ -402,12 +402,32 @@ tbody tr {
   margin-top: 10px;
   padding: 6px 4px;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 190px;
   border-top: 1px solid var(--border);
   max-width: 100%;
 }
 
 .move-tree-wrap svg {
   display: block;
+}
+
+.move-tree-wrap svg [data-jump],
+.move-tree-wrap svg [data-view-branch] {
+  cursor: pointer;
+}
+
+.move-tree-wrap svg circle[data-jump]:hover {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.move-tree-wrap svg circle[data-view-branch]:hover {
+  stroke-width: 2.5;
+}
+
+.move-tree-wrap svg text[data-view-branch]:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 860px) {

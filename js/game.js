@@ -907,7 +907,7 @@ function renderMoveTree() {
   const moveCount = boardData.states.length - 1;
   const xStep = MOVE_TREE_X_STEP;
   const marginX = MOVE_TREE_MARGIN_X;
-  const mainY = 14;
+  const mainY = 22;
   const laneGap = 18;
   const r = 5;
   const rSmall = 4;
@@ -927,6 +927,13 @@ function renderMoveTree() {
   // ligne principale
   svg += `<line x1="${colX(0)}" y1="${mainY}" x2="${colX(moveCount)}" y2="${mainY}" stroke="#a97c3a" stroke-width="2" />`;
 
+  // Repères de numéros de coups au-dessus de la ligne pour se repérer sans avoir à
+  // survoler chaque pastille, espacés pour rester lisibles quelle que soit la longueur.
+  const tickInterval = moveCount <= 40 ? 10 : moveCount <= 120 ? 20 : moveCount <= 300 ? 50 : 100;
+  for (let i = tickInterval; i < moveCount; i += tickInterval) {
+    svg += `<text x="${colX(i)}" y="${mainY - r - 5}" font-size="9" fill="#a97c3a" text-anchor="middle" opacity="0.7">${i}</text>`;
+  }
+
   const viewingAnchor = branchMode === "viewing" && viewingBranch ? viewingBranch.anchor_move_number : null;
 
   for (let i = 0; i <= moveCount; i++) {
@@ -937,7 +944,7 @@ function renderMoveTree() {
     let fill = "#f5f3ee";
     if (mv && !mv.pass) fill = mv.color === "b" ? "#0a0a0a" : "#ffffff";
     const stroke = mv && !mv.pass && mv.color === "w" ? "#00000055" : "#a97c3a";
-    svg += `<circle cx="${x}" cy="${mainY}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1" data-jump="${i}" style="cursor:pointer;">`;
+    svg += `<circle cx="${x}" cy="${mainY}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1" data-jump="${i}">`;
     svg += `<title>Coup ${i}${mv && mv.pass ? " (passe)" : ""}</title></circle>`;
     if (isCurrent || isAnchorOfViewed) {
       svg += `<circle cx="${x}" cy="${mainY}" r="${r + 3}" fill="none" stroke="#6366f1" stroke-width="2" />`;
@@ -951,32 +958,36 @@ function renderMoveTree() {
     const isViewingThis = branchMode === "viewing" && viewingBranch && viewingBranch.id === branch.id;
 
     svg += `<line x1="${startX}" y1="${mainY + r}" x2="${startX}" y2="${y}" stroke="#22c55e" stroke-width="1.5" />`;
-    svg += `<line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" stroke="#22c55e" stroke-width="1.5" data-view-branch="${branch.id}" style="cursor:pointer;" />`;
+    svg += `<line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" stroke="#22c55e" stroke-width="1.5" data-view-branch="${branch.id}" />`;
 
     branch.moves.forEach((mv, j) => {
       const x = colX(branch.anchor_move_number + j + 1);
       const fill = mv.color === "b" ? "#0a0a0a" : "#ffffff";
       const isCurrentInBranch = isViewingThis && branchViewIndex === j + 1;
-      svg += `<circle cx="${x}" cy="${y}" r="${rSmall}" fill="${fill}" stroke="#22c55e" stroke-width="1" data-view-branch="${branch.id}" data-branch-index="${j + 1}" style="cursor:pointer;">`;
+      svg += `<circle cx="${x}" cy="${y}" r="${rSmall}" fill="${fill}" stroke="#22c55e" stroke-width="1" data-view-branch="${branch.id}" data-branch-index="${j + 1}">`;
       svg += `<title>${escapeHtml(branch.name)} — coup ${j + 1}</title></circle>`;
       if (isCurrentInBranch) {
         svg += `<circle cx="${x}" cy="${y}" r="${rSmall + 3}" fill="none" stroke="#6366f1" stroke-width="2" />`;
       }
     });
 
-    svg += `<text x="${endX + 6}" y="${y + 3}" font-size="10" fill="#166534" data-view-branch="${branch.id}" style="cursor:pointer;">${escapeHtml(branch.name)}</text>`;
+    svg += `<text x="${endX + 6}" y="${y + 3}" font-size="10" fill="#166534" data-view-branch="${branch.id}">${escapeHtml(branch.name)}</text>`;
   }
 
   svg += `</svg>`;
   wrap.innerHTML = svg;
 
-  // Fait suivre le scroll horizontal de l'arbre sur le coup courant (comme OGS),
-  // sinon sur une longue partie il faut chercher la position à la main à chaque coup.
+  // Fait suivre le scroll de l'arbre (horizontal ET vertical) sur le coup courant
+  // (comme OGS), sinon sur une longue partie avec beaucoup de branches il faut
+  // chercher la position à la main à chaque coup.
+  const viewedLane = branchMode === "viewing" && viewingBranch ? placed.find((p) => p.branch.id === viewingBranch.id) : null;
   const targetX =
     branchMode === "viewing" && viewingBranch
       ? colX(viewingBranch.anchor_move_number + branchViewIndex)
       : colX(currentMoveIndex);
+  const targetY = viewedLane ? mainY + laneGap * (viewedLane.lane + 1) : mainY;
   wrap.scrollLeft = Math.max(0, Math.min(wrap.scrollWidth - wrap.clientWidth, targetX - wrap.clientWidth / 2));
+  wrap.scrollTop = Math.max(0, Math.min(wrap.scrollHeight - wrap.clientHeight, targetY - wrap.clientHeight / 2));
 }
 
 function handleMoveTreeClick(e) {
@@ -1117,6 +1128,7 @@ function renderBranchView() {
     branchViewIndex > 0 ? viewingBranch.moves[branchViewIndex - 1] : boardData.moves[viewingBranch.anchor_move_number];
   goban.draw(branchViewStates[branchViewIndex], move, [], [], []);
   document.getElementById("ctl-move-label").textContent = `🌿 ${viewingBranch.name} — coup ${branchViewIndex} / ${viewingBranch.moves.length}`;
+  scheduleListRender();
 }
 
 function exitBranchView() {

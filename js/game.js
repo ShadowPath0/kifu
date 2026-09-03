@@ -867,33 +867,24 @@ function renderBranchesList() {
 
 const MOVE_TREE_X_STEP = 15;
 const MOVE_TREE_MARGIN_X = 12;
+const MOVE_TREE_LANE_PADDING = 10; // espace minimal (px) entre deux branches d'une même lane
 
-// Estimation grossière de la largeur d'une étiquette en pixels (police 10px) : sans
-// mesure DOM réelle disponible au moment du calcul de layout, ~6.2px/caractère est
-// une approximation raisonnable pour une police sans-serif à cette taille.
-function estimateLabelWidth(text) {
-  return 8 + text.length * 6.2;
-}
-
-// Empile les branches par "lane" (rangée) en évitant les chevauchements horizontaux.
-// Chaque lane doit rester libre jusqu'à la fin de l'ÉTIQUETTE de la branche (pas
-// seulement ses pierres) : le nom d'une variante s'affiche après ses pierres, donc
-// l'ignorer ici faisait chevaucher l'étiquette d'une branche avec les pierres de la
-// branche suivante placée dans la même lane.
+// Empile les branches par "lane" (rangée) en évitant les chevauchements horizontaux :
+// une lane reste occupée jusqu'à la fin des pierres de la branche (+ une petite marge),
+// pas de nom affiché dans l'arbre façon OGS donc pas besoin d'y réserver de place.
 function layoutBranchLanes(branchList, colX) {
   const sorted = [...branchList].sort((a, b) => a.anchor_move_number - b.anchor_move_number);
   const laneEnds = []; // laneEnds[i] = position x (px) libérée par cette lane
   const placed = [];
   for (const b of sorted) {
     const startX = colX(b.anchor_move_number);
-    const endX = colX(b.anchor_move_number + b.moves.length);
-    const labelEndX = endX + estimateLabelWidth(b.name);
+    const endX = colX(b.anchor_move_number + b.moves.length) + MOVE_TREE_LANE_PADDING;
     let lane = laneEnds.findIndex((end) => end < startX);
     if (lane === -1) {
       lane = laneEnds.length;
-      laneEnds.push(labelEndX);
+      laneEnds.push(endX);
     } else {
-      laneEnds[lane] = labelEndX;
+      laneEnds[lane] = endX;
     }
     placed.push({ branch: b, lane });
   }
@@ -916,10 +907,10 @@ function renderMoveTree() {
 
   const { placed, laneCount } = layoutBranchLanes(branches, colX);
 
-  const maxLabelEndX = placed.length
-    ? Math.max(...placed.map((p) => colX(p.branch.anchor_move_number + p.branch.moves.length) + estimateLabelWidth(p.branch.name)))
+  const maxBranchEndX = placed.length
+    ? Math.max(...placed.map((p) => colX(p.branch.anchor_move_number + p.branch.moves.length)))
     : 0;
-  const width = Math.max(colX(moveCount) + marginX, maxLabelEndX + marginX);
+  const width = Math.max(colX(moveCount) + marginX, maxBranchEndX + marginX);
   const height = mainY + (laneCount > 0 ? laneCount * laneGap + 14 : 10);
 
   let svg = `<svg width="${Math.max(width, 200)}" height="${height}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
@@ -958,7 +949,7 @@ function renderMoveTree() {
     const isViewingThis = branchMode === "viewing" && viewingBranch && viewingBranch.id === branch.id;
 
     svg += `<line x1="${startX}" y1="${mainY + r}" x2="${startX}" y2="${y}" stroke="#22c55e" stroke-width="1.5" />`;
-    svg += `<line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" stroke="#22c55e" stroke-width="1.5" data-view-branch="${branch.id}" />`;
+    svg += `<line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" stroke="#22c55e" stroke-width="1.5" data-view-branch="${branch.id}"><title>${escapeHtml(branch.name)}</title></line>`;
 
     branch.moves.forEach((mv, j) => {
       const x = colX(branch.anchor_move_number + j + 1);
@@ -970,8 +961,6 @@ function renderMoveTree() {
         svg += `<circle cx="${x}" cy="${y}" r="${rSmall + 3}" fill="none" stroke="#6366f1" stroke-width="2" />`;
       }
     });
-
-    svg += `<text x="${endX + 6}" y="${y + 3}" font-size="10" fill="#166534" data-view-branch="${branch.id}">${escapeHtml(branch.name)}</text>`;
   }
 
   svg += `</svg>`;

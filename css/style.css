@@ -426,8 +426,8 @@ tbody tr {
   stroke-width: 2.5;
 }
 
-.move-tree-wrap svg text[data-view-branch]:hover {
-  text-decoration: underline;
+.move-tree-wrap svg line[data-view-branch]:hover {
+  stroke-width: 2.5;
 }
 
 @media (max-width: 860px) {

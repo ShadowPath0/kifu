@@ -7,14 +7,33 @@
 
 const CHALLENGES = [
   {
-    id: "week-2026-09-08",
+    id: "week-2026-09-08-cho-seo",
     weekLabel: "Semaine du 8 septembre 2026",
-    title: "Mémoriser l'ouverture de la partie de l'oreille rouge",
-    description:
-      "Rejouez de mémoire les 20 premiers coups de la célèbre partie de l'oreille rouge (Shusaku vs Gennan Inseki, 1846), en mode Deviner le coup.",
+    title: "Mémoriser Cho Hun-hyeon vs Seo Pong-su (14e Kiwang, 1989)",
+    description: "Rejouez de mémoire cette finale du Kiwang, jusqu'au coup 150, en mode Deviner le coup.",
     type: "memorize",
-    proGameId: "shusaku-ear-reddening-1846",
+    proGameId: "cho-hunhyeon-seo-pongsu-1989",
     fromMove: 1,
-    toMove: 20,
+    toMove: 150,
+  },
+  {
+    id: "week-2026-09-08-shin-xie",
+    weekLabel: "Semaine du 8 septembre 2026",
+    title: "Mémoriser Shin Jinseo vs Xie Ke (Coupe Lanke de Quzhou, 2026)",
+    description: "Rejouez de mémoire cette partie récente entre deux 9 dan, jusqu'au coup 150, en mode Deviner le coup.",
+    type: "memorize",
+    proGameId: "shin-jinseo-xie-ke-2026",
+    fromMove: 1,
+    toMove: 150,
+  },
+  {
+    id: "week-2026-09-08-mok-lee",
+    weekLabel: "Semaine du 8 septembre 2026",
+    title: "Mémoriser Mok Jinseok vs Lee Changho",
+    description: "Rejouez de mémoire cette partie (elle se termine par abandon au coup 119), en mode Deviner le coup.",
+    type: "memorize",
+    proGameId: "mok-jinseok-lee-changho",
+    fromMove: 1,
+    toMove: 150,
   },
 ];

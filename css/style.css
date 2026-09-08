@@ -421,8 +421,10 @@ tbody tr {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: var(--ink);
-  color: white;
+  /* Couleurs fixes (pas liées à --ink, qui s'inverse en mode sombre) : sinon le fond
+     devient clair en mode sombre alors que le texte reste blanc, donc illisible. */
+  background: #24211c;
+  color: #ffffff;
   padding: 10px 16px;
   border-radius: 8px;
   font-size: 0.88rem;

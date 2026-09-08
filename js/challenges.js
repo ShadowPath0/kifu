@@ -91,12 +91,32 @@ function renderChallenges() {
             <input type="checkbox" data-done="${c.id}" ${isDone ? "checked" : ""} />
             ${t("challenges.markDone")}
           </label>
+          <button type="button" class="link-btn discord-share-btn${isDone ? "" : " hidden"}" data-discord="${c.id}" style="margin-top:0;">${t("challenges.copyForDiscord")}</button>
         </div>
       </div>`;
     })
     .join("");
 
   listEl.querySelectorAll("input[data-done]").forEach((cb) => {
-    cb.addEventListener("change", () => setDone(cb.dataset.done, cb.checked));
+    cb.addEventListener("change", () => {
+      setDone(cb.dataset.done, cb.checked);
+      cb.closest("div").querySelector(".discord-share-btn").classList.toggle("hidden", !cb.checked);
+    });
   });
+  listEl.querySelectorAll("button[data-discord]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const c = CHALLENGES.find((x) => x.id === btn.dataset.discord);
+      copyDiscordMessage(c);
+    });
+  });
+}
+
+// Pas de backend, pas de compte : le point Discord se fait "à l'honneur" — on prépare un
+// message tout prêt que la personne colle elle-même dans le salon dédié du serveur.
+function copyDiscordMessage(c) {
+  const message = t("challenges.discordMessage", { title: c.title, week: c.weekLabel });
+  navigator.clipboard?.writeText(message).then(
+    () => showToast(t("challenges.copied")),
+    () => showToast(t("challenges.copyFailed"), true)
+  );
 }

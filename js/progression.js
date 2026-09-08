@@ -142,7 +142,7 @@ function renderPersistentTable(games, allErrors) {
   const third = Math.ceil(datedGames.length / 3);
   const periods = [datedGames.slice(0, third), datedGames.slice(third, third * 2), datedGames.slice(third * 2)];
   const categories = loadCollection("categories");
-  const catName = (id) => (categories.find((c) => c.id === id) || {}).name || "?";
+  const catName = (id) => categoryDisplayName(categories.find((c) => c.id === id));
 
   const periodTop3 = periods.map((periodGames) => {
     const gameIds = new Set(periodGames.map((g) => g.id));

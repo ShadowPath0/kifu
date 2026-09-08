@@ -21,7 +21,12 @@ async function loadCategories() {
   tbody.querySelectorAll(".rename-input").forEach((input) => {
     input.addEventListener("change", async () => {
       try {
-        await api.updateCategory(input.dataset.id, { name: input.value });
+        const cat = cats.find((c) => c.id === parseInt(input.dataset.id, 10));
+        // Un préréglage renommé n'est plus "le préréglage" : on décroche sa clé de
+        // traduction pour que ce soit bien le nouveau nom qui s'affiche, dans les deux langues.
+        const payload = { name: input.value };
+        if (cat && cat.is_preset && cat.key && input.value !== cat.name) payload.key = null;
+        await api.updateCategory(input.dataset.id, payload);
         showToast(t("categories.renamed"));
       } catch (err) {
         showToast(t("categories.error", { msg: err.message }), true);

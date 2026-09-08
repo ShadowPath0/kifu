@@ -123,7 +123,7 @@ function buildReport(range, games, allErrors, categories, rankHistory) {
 }
 
 function renderReportHtml(range, report, prevReport, categories) {
-  const catName = (id) => (categories.find((c) => c.id === id) || {}).name || "?";
+  const catName = (id) => categoryDisplayName(categories.find((c) => c.id === id));
 
   const rankLine = report.rankEnd
     ? `${report.rankEnd.rank}${
@@ -209,7 +209,7 @@ function exportMarkdown() {
   const { range, report, prevReport } = window.__lastReport || {};
   if (!report) return;
   const categories = loadCollection("categories");
-  const catName = (id) => (categories.find((c) => c.id === id) || {}).name || "?";
+  const catName = (id) => categoryDisplayName(categories.find((c) => c.id === id));
   const label = formatRangeLabel(range);
 
   let md = `# Kifu — ${t("reports.title")} — ${label}\n\n`;

@@ -26,30 +26,45 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+// Le "key" sert à afficher un nom traduit pour les étiquettes préréglées (via
+// categoryDisplayName ci-dessous) sans jamais toucher au "name" stocké, que l'utilisateur
+// peut renommer librement dans Étiquettes — le name reste la source de vérité éditable,
+// key n'est qu'un pont vers i18n pour les préréglages non renommés.
 const PRESET_CATEGORIES = [
-  ["Direction de jeu", "#ef4444"],
-  ["Joseki", "#f97316"],
-  ["Choix de fuseki global", "#f59e0b"],
-  ["Invasion prématurée", "#eab308"],
-  ["Tesuji manqué", "#84cc16"],
-  ["Lecture insuffisante", "#22c55e"],
-  ["Erreur de timing sente/gote", "#14b8a6"],
-  ["Vie et mort", "#06b6d4"],
-  ["Contact incorrect", "#3b82f6"],
-  ["Surconcentration locale", "#6366f1"],
-  ["Erreur de yose", "#a855f7"],
-  ["Comptage erroné", "#ec4899"],
-  ["Erreurs de forme", "#0ea5e9"],
+  ["direction", "Direction de jeu", "#ef4444"],
+  ["joseki", "Joseki", "#f97316"],
+  ["fuseki_choice", "Choix de fuseki global", "#f59e0b"],
+  ["premature_invasion", "Invasion prématurée", "#eab308"],
+  ["missed_tesuji", "Tesuji manqué", "#84cc16"],
+  ["insufficient_reading", "Lecture insuffisante", "#22c55e"],
+  ["sente_gote_timing", "Erreur de timing sente/gote", "#14b8a6"],
+  ["life_and_death", "Vie et mort", "#06b6d4"],
+  ["wrong_contact", "Contact incorrect", "#3b82f6"],
+  ["overconcentration", "Surconcentration locale", "#6366f1"],
+  ["yose_mistake", "Erreur de yose", "#a855f7"],
+  ["miscounting", "Comptage erroné", "#ec4899"],
+  ["shape_mistake", "Erreurs de forme", "#0ea5e9"],
 ];
 
 function ensureSeedData() {
   const categories = loadCollection("categories");
   const existingNames = new Set(categories.map((c) => c.name));
   let changed = false;
-  for (const [name, color] of PRESET_CATEGORIES) {
+  for (const [key, name, color] of PRESET_CATEGORIES) {
     if (!existingNames.has(name)) {
-      categories.push({ id: nextId("categories"), name, color, is_preset: true });
+      categories.push({ id: nextId("categories"), name, key, color, is_preset: true });
       changed = true;
+    }
+  }
+  // Rattache un "key" aux préréglages déjà seedés avant l'ajout de ce champ (sinon leur
+  // nom resterait bloqué en français même en changeant la langue de l'interface).
+  for (const cat of categories) {
+    if (cat.is_preset && !cat.key) {
+      const preset = PRESET_CATEGORIES.find(([, name]) => name === cat.name);
+      if (preset) {
+        cat.key = preset[0];
+        changed = true;
+      }
     }
   }
   if (changed) saveCollection("categories", categories);
@@ -58,6 +73,18 @@ ensureSeedData();
 
 function findCategory(id) {
   return loadCollection("categories").find((c) => c.id === id) || null;
+}
+
+// Nom à afficher pour une étiquette : traduit pour un préréglage non renommé, sinon le
+// nom stocké tel quel (étiquette perso, ou préréglage que l'utilisateur a renommé).
+function categoryDisplayName(category) {
+  if (!category) return "?";
+  if (category.is_preset && category.key) {
+    const key = "category." + category.key;
+    const translated = t(key);
+    if (translated !== key) return translated;
+  }
+  return category.name;
 }
 
 function rankToNumeric(rank) {
@@ -255,6 +282,7 @@ const api = {
     if (idx === -1) throw new Error("Catégorie introuvable");
     if (payload.name !== undefined && payload.name !== null) categories[idx].name = payload.name;
     if (payload.color !== undefined && payload.color !== null) categories[idx].color = payload.color;
+    if ("key" in payload) categories[idx].key = payload.key; // key:null décroche volontairement la traduction
     saveCollection("categories", categories);
     return categories[idx];
   },
@@ -415,7 +443,7 @@ const api = {
     const entries = [...counts.entries()]
       .map(([categoryId, count]) => {
         const cat = findCategory(categoryId);
-        return { category_id: categoryId, category_name: cat ? cat.name : "?", color: cat ? cat.color : "#999", count };
+        return { category_id: categoryId, category_name: cat ? categoryDisplayName(cat) : "?", color: cat ? cat.color : "#999", count };
       })
       .sort((a, b) => b.count - a.count);
     return entries;

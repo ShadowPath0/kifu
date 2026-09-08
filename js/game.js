@@ -232,7 +232,7 @@ function setupComment() {
 
 function populateCategorySelect() {
   const sel = document.getElementById("am-category");
-  sel.innerHTML = categories.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  sel.innerHTML = categories.map((c) => `<option value="${c.id}">${escapeHtml(categoryDisplayName(c))}</option>`).join("");
   renderQuickTagRow();
 }
 
@@ -245,7 +245,7 @@ function renderQuickTagRow() {
   if (!el) return;
   el.innerHTML =
     `<option value="" selected disabled>${t("game.quickTagPlaceholder")}</option>` +
-    categories.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+    categories.map((c) => `<option value="${c.id}">${escapeHtml(categoryDisplayName(c))}</option>`).join("");
 }
 
 function updateSeverityPickerUI() {
@@ -858,7 +858,7 @@ function renderBranchesList() {
       (b) =>
         `<span class="branch-chip" data-view="${b.id}">${escapeHtml(
           t("game.branches.chip", { name: b.name, n: b.moves.length, s: b.moves.length > 1 ? "s" : "" })
-        )} <button data-add-reading="${b.id}" title="${escapeHtml(t("reading.addFromBranch"))}">📚</button><button data-del-branch="${b.id}">✕</button></span>`
+        )} <button data-del-branch="${b.id}">✕</button></span>`
     )
     .join("");
   el.querySelectorAll(".branch-chip").forEach((chip) => {
@@ -874,34 +874,24 @@ function renderBranchesList() {
       deleteBranch(parseInt(btn.dataset.delBranch, 10));
     });
   });
-  el.querySelectorAll("button[data-add-reading]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const branch = branches.find((b) => b.id === parseInt(btn.dataset.addReading, 10));
-      if (branch) addBranchToReadingLibrary(branch);
-    });
-  });
   renderMoveTree();
 }
 
 // ---------- bibliothèque de lecture (façon Go Magic) ----------
+// Toute variante (branche) terminée est automatiquement une séquence de lecture — pas
+// de copie séparée : reading.html liste directement les branches de toutes les parties.
+// Cette action ne fait que créer une branche de plus à partir d'une plage de la ligne
+// principale, pour les cas où on veut s'entraîner sur un passage qu'on n'a pas eu besoin
+// de dévier (ex : "coup 79 à 85").
 
-function addBranchToReadingLibrary(branch) {
-  const anchorStones = boardData.states[branch.anchor_move_number];
-  const defaultName = t("reading.defaultNameBranch", { name: branch.name, game: game.title });
-  const name = prompt(t("reading.namePrompt"), defaultName);
-  if (name === null) return;
-  saveReadingSequence(name || defaultName, branch.anchor_move_number, anchorStones, branch.moves);
-}
-
-function addRangeToReadingLibrary() {
+async function addRangeToReadingLibrary() {
+  if (!guardController()) return;
   const from = parseInt(document.getElementById("reading-from").value, 10);
   const to = parseInt(document.getElementById("reading-to").value, 10);
   if (isNaN(from) || isNaN(to) || from < 1 || to < from || to > boardData.states.length - 1) {
     showToast(t("reading.invalidRange"), true);
     return;
   }
-  const anchorStones = boardData.states[from - 1];
   const moves = boardData.moves.slice(from, to + 1).filter((m) => !m.pass);
   if (!moves.length) {
     showToast(t("reading.invalidRange"), true);
@@ -910,22 +900,20 @@ function addRangeToReadingLibrary() {
   const defaultName = t("reading.defaultNameRange", { game: game.title, from, to });
   const name = prompt(t("reading.namePrompt"), defaultName);
   if (name === null) return;
-  saveReadingSequence(name || defaultName, from - 1, anchorStones, moves);
-}
-
-function saveReadingSequence(name, anchorMoveNumber, anchorStones, moves) {
-  const sequences = loadCollection("reading_sequences");
-  sequences.push({
-    id: nextId("reading_sequences"),
-    name,
-    gameTitle: game.title,
-    anchorMoveNumber,
-    boardSize: boardData.size,
-    anchorStones: anchorStones.map((s) => ({ row: s.row, col: s.col, color: s.color })),
+  const payload = {
+    anchor_move_number: from - 1,
     moves: moves.map((m) => ({ row: m.row, col: m.col, color: m.color })),
-    createdAt: nowIso(),
-  });
-  saveCollection("reading_sequences", sequences);
+    name: name || defaultName,
+  };
+  if (Room.active && !Room.isOwner) {
+    Room.send("intent:create-branch", payload);
+    showToast(t("game.errors.sentToHost"));
+    return;
+  }
+  const created = await api.createBranch(gameId, payload);
+  branches.push(created);
+  if (Room.active) Room.send("sync:branch-created", { branch: created });
+  renderBranchesList();
   showToast(t("reading.added"));
 }
 
@@ -1440,7 +1428,7 @@ function errorItemHtml(e) {
     <div class="error-item" data-move="${e.move_number}" title="${escapeHtml(titleBits.join(" — "))}">
       <span class="move-no">#${e.move_number}</span>
       <span class="dot" style="background:${e.category.color}"></span>
-      <span class="error-item-label">${escapeHtml(e.category.name)}</span>
+      <span class="error-item-label">${escapeHtml(categoryDisplayName(e.category))}</span>
       <span class="sev-dot sev-${e.severity}"></span>
       <button class="icon-btn" data-edit="${e.id}">✏️</button>
       <button class="icon-btn danger" data-del="${e.id}">✕</button>

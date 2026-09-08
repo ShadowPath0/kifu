@@ -9,13 +9,25 @@ let awaiting = false; // vrai pendant le court flash après un clic
 document.addEventListener("DOMContentLoaded", () => {
   renderNav("reading");
   const params = new URLSearchParams(window.location.search);
-  const id = parseInt(params.get("id"), 10);
-  const all = loadCollection("reading_sequences");
-  sequence = all.find((s) => s.id === id);
-  if (!sequence) {
+  const branchId = parseInt(params.get("branchId"), 10);
+  const branch = loadCollection("branches").find((b) => b.id === branchId);
+  const parentGame = branch ? loadCollection("games").find((g) => g.id === branch.game_id) : null;
+  if (!branch || !parentGame || !parentGame.sgf_content) {
     document.querySelector("main").innerHTML = `<div class="panel">${t("reading.notFound")}</div>`;
     return;
   }
+
+  const gameBoardData = computeBoardStates(parentGame.sgf_content);
+  sequence = {
+    id: branch.id,
+    name: branch.name,
+    gameTitle: parentGame.title,
+    gameId: parentGame.id,
+    anchorMoveNumber: branch.anchor_move_number,
+    boardSize: gameBoardData.size,
+    anchorStones: gameBoardData.states[branch.anchor_move_number],
+    moves: branch.moves,
+  };
 
   document.getElementById("rt-title").textContent = sequence.name;
   document.getElementById("rt-summary").textContent = t("reading.summary", {

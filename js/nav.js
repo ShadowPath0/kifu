@@ -5,6 +5,7 @@ function renderNav(active) {
     { href: "index.html", label: "Dashboard", key: "dashboard" },
     { href: "import.html", label: "Importer", key: "import" },
     { href: "games.html", label: "Parties", key: "games" },
+    { href: "pro-games.html", label: "Parties pro", key: "pro-games" },
     { href: "progression.html", label: "Progression", key: "progression" },
     { href: "reports.html", label: "Rapports", key: "reports" },
     { href: "categories.html", label: "Étiquettes", key: "categories" },

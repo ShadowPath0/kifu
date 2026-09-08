@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Partie pro — Kifu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div>
+          <h1 id="pg-title">…</h1>
+          <div id="pg-summary" class="muted"></div>
+        </div>
+        <a class="btn" href="pro-games.html">← Retour aux parties pro</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="goban-wrap">
+        <div class="review-board-col">
+          <canvas id="goban-canvas"></canvas>
+
+          <div id="normal-controls" class="goban-controls hidden">
+            <button id="ctl-first" class="icon-btn">⏮</button>
+            <button id="ctl-prev" class="icon-btn">◀</button>
+            <input id="ctl-slider" type="range" min="0" max="0" value="0" />
+            <button id="ctl-next" class="icon-btn">▶</button>
+            <button id="ctl-last" class="icon-btn">⏭</button>
+          </div>
+          <div id="normal-label" class="muted hidden" style="margin-top:6px;">Coup 0 (position initiale)</div>
+          <div class="muted hidden" id="normal-hint" style="font-size:0.78rem;">⌨ Flèches (←↑ précédent, →↓ suivant) · Début/Fin (premier/dernier coup)</div>
+        </div>
+
+        <div class="error-sidebar" id="guess-panel">
+          <h3>🎯 Deviner le coup</h3>
+          <div id="guess-status" class="muted">Chargement…</div>
+          <div id="guess-feedback" style="margin-top:10px;"></div>
+          <div class="modal-actions" style="justify-content:flex-start;margin-top:12px;">
+            <button class="hidden" id="guess-finish-btn">Terminer la session</button>
+          </div>
+
+          <div id="guess-summary" class="hidden" style="margin-top:16px;padding:12px 14px;border:1px solid #86efac;border-radius:var(--radius);background:#f0fdf4;"></div>
+
+          <h3 style="margin-top:20px;">Historique</h3>
+          <div id="guess-history"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/sgf.js?v=2"></script>
+  <script src="js/api.js?v=2"></script>
+  <script src="js/nav.js?v=2"></script>
+  <script src="js/goban.js?v=2"></script>
+  <script src="js/pro-games-data.js?v=2"></script>
+  <script src="js/pro-game.js?v=2"></script>
+</body>
+</html>

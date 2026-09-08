@@ -1,0 +1,197 @@
+let game, boardData, goban, mode;
+let currentMoveIndex = 0;
+
+// ---------- mode "deviner le coup" ----------
+let guessScore = { correct: 0, total: 0 };
+let guessFinished = false;
+let guessAdvancing = false; // true pendant le court délai entre un bon coup et le suivant
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderNav("pro-games");
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  mode = params.get("mode") === "guess" ? "guess" : "normal";
+  game = PRO_GAMES.find((g) => g.id === id);
+  if (!game) {
+    document.querySelector("main").innerHTML = "<div class='panel'>Partie pro introuvable.</div>";
+    return;
+  }
+
+  document.getElementById("pg-title").textContent = game.title;
+  document.getElementById("pg-summary").textContent =
+    `${game.black} (${game.blackRank || "?"}) vs ${game.white} (${game.whiteRank || "?"}) · ${game.date || ""} · ${game.result || ""}`;
+
+  boardData = computeBoardStates(game.sgf);
+  goban = new Goban(document.getElementById("goban-canvas"), boardData.size);
+
+  if (mode === "normal") {
+    setupNormalMode();
+  } else {
+    setupGuessMode();
+  }
+});
+
+// ---------- mode normal (rejouer librement) ----------
+
+function setupNormalMode() {
+  document.getElementById("guess-panel").classList.add("hidden");
+  document.getElementById("normal-controls").classList.remove("hidden");
+  document.getElementById("normal-label").classList.remove("hidden");
+  document.getElementById("normal-hint").classList.remove("hidden");
+
+  const slider = document.getElementById("ctl-slider");
+  slider.max = boardData.states.length - 1;
+  slider.addEventListener("input", () => setNormalIndex(parseInt(slider.value, 10)));
+  document.getElementById("ctl-first").addEventListener("click", () => setNormalIndex(0));
+  document.getElementById("ctl-prev").addEventListener("click", () => setNormalIndex(Math.max(0, currentMoveIndex - 1)));
+  document.getElementById("ctl-next").addEventListener("click", () =>
+    setNormalIndex(Math.min(boardData.states.length - 1, currentMoveIndex + 1))
+  );
+  document.getElementById("ctl-last").addEventListener("click", () => setNormalIndex(boardData.states.length - 1));
+  document.addEventListener("keydown", (e) => {
+    if (mode !== "normal") return;
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setNormalIndex(Math.max(0, currentMoveIndex - 1));
+    } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      setNormalIndex(Math.min(boardData.states.length - 1, currentMoveIndex + 1));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setNormalIndex(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setNormalIndex(boardData.states.length - 1);
+    }
+  });
+
+  setNormalIndex(0);
+}
+
+function setNormalIndex(i) {
+  currentMoveIndex = i;
+  document.getElementById("ctl-slider").value = i;
+  const move = boardData.moves[i];
+  document.getElementById("normal-label").textContent =
+    i === 0 ? "Coup 0 (position initiale)" : `Coup ${i} — ${move.color === "b" ? "Noir" : "Blanc"}${move.pass ? " (passe)" : ""}`;
+  goban.draw(boardData.states[i], move, [], [], []);
+}
+
+// ---------- mode "deviner le coup" ----------
+
+function setupGuessMode() {
+  document.getElementById("guess-panel").classList.remove("hidden");
+  document.getElementById("guess-finish-btn").addEventListener("click", finishGuessSession);
+  document.getElementById("goban-canvas").addEventListener("click", handleGuessClick);
+  renderHistory();
+  advanceGuessPrompt();
+}
+
+// Avance jusqu'au prochain coup qui nécessite vraiment une devinette (les passes
+// s'enchaînent automatiquement, sans quoi il n'y aurait rien à cliquer dessus).
+function advanceGuessPrompt() {
+  document.getElementById("guess-feedback").innerHTML = "";
+
+  while (boardData.moves[currentMoveIndex + 1] && boardData.moves[currentMoveIndex + 1].pass) {
+    currentMoveIndex++;
+  }
+
+  const nextMove = boardData.moves[currentMoveIndex + 1];
+  goban.draw(boardData.states[currentMoveIndex], boardData.moves[currentMoveIndex], [], [], []);
+
+  if (!nextMove) {
+    finishGuessSession();
+    return;
+  }
+
+  document.getElementById("guess-status").textContent =
+    `Coup ${currentMoveIndex + 1} — ${nextMove.color === "b" ? "Noir" : "Blanc"} à jouer. Cliquez sur le plateau pour proposer un coup. (${errorPct()}% d'erreur)`;
+  document.getElementById("guess-finish-btn").classList.toggle("hidden", guessScore.total === 0);
+}
+
+// Ne révèle jamais la solution : un essai faux affiche juste "faux", sans indiquer où
+// jouer, et la personne retente jusqu'à trouver le bon point (comme demandé — pas de
+// solution donnée, façon Go Magic). Un essai juste pose la pierre et avance seul.
+function handleGuessClick(e) {
+  if (guessFinished || guessAdvancing) return;
+  const pos = goban.pixelToPos(e.offsetX, e.offsetY);
+  if (!pos) return;
+  const nextMove = boardData.moves[currentMoveIndex + 1];
+  if (!nextMove) return;
+
+  const currentStones = boardData.states[currentMoveIndex];
+  if (currentStones.some((s) => s.row === pos.row && s.col === pos.col)) return; // point déjà occupé
+
+  guessScore.total++;
+  const isCorrect = pos.row === nextMove.row && pos.col === nextMove.col;
+
+  if (isCorrect) {
+    guessScore.correct++;
+    guessAdvancing = true;
+    goban.draw(boardData.states[currentMoveIndex + 1], nextMove, [], [], []);
+    document.getElementById("guess-feedback").innerHTML = '<div style="color:#166534;font-weight:600;">✅ Correct !</div>';
+    document.getElementById("guess-status").textContent = `${errorPct()}% d'erreur jusqu'ici`;
+    document.getElementById("guess-finish-btn").classList.toggle("hidden", guessScore.total === 0);
+    setTimeout(() => {
+      guessAdvancing = false;
+      currentMoveIndex++;
+      advanceGuessPrompt();
+    }, 450);
+  } else {
+    document.getElementById("guess-feedback").innerHTML = '<div style="color:#b91c1c;font-weight:600;">❌ Ce n\'est pas le bon coup, réessayez.</div>';
+    document.getElementById("guess-status").textContent =
+      `Coup ${currentMoveIndex + 1} — ${nextMove.color === "b" ? "Noir" : "Blanc"} à jouer. (${errorPct()}% d'erreur)`;
+    document.getElementById("guess-finish-btn").classList.toggle("hidden", guessScore.total === 0);
+  }
+}
+
+function errorPct() {
+  if (!guessScore.total) return 0;
+  return Math.round((1 - guessScore.correct / guessScore.total) * 100);
+}
+
+function finishGuessSession() {
+  guessFinished = true;
+  document.getElementById("guess-finish-btn").classList.add("hidden");
+  document.getElementById("guess-feedback").innerHTML = "";
+
+  const total = guessScore.total;
+  document.getElementById("guess-status").textContent = "Session terminée.";
+  const summaryEl = document.getElementById("guess-summary");
+  summaryEl.classList.remove("hidden");
+  summaryEl.innerHTML = total
+    ? `<strong>Résultat : ${guessScore.correct} coup(s) trouvé(s) en ${total} essai(s) (${errorPct()}% d'erreur)</strong>`
+    : `<span class="muted">Aucun coup deviné avant l'arrêt de la session.</span>`;
+
+  if (total > 0) {
+    saveGuessResult(total, guessScore.correct);
+    renderHistory();
+  }
+}
+
+function saveGuessResult(total, correct) {
+  const key = STORAGE_PREFIX + "progames_stats";
+  const all = JSON.parse(localStorage.getItem(key) || "{}");
+  const list = all[game.id] || [];
+  list.unshift({ date: new Date().toISOString(), total, correct });
+  all[game.id] = list.slice(0, 20);
+  localStorage.setItem(key, JSON.stringify(all));
+}
+
+function renderHistory() {
+  const key = STORAGE_PREFIX + "progames_stats";
+  const all = JSON.parse(localStorage.getItem(key) || "{}");
+  const list = all[game.id] || [];
+  const el = document.getElementById("guess-history");
+  if (!list.length) {
+    el.innerHTML = '<p class="muted">Aucune tentative enregistrée pour l\'instant.</p>';
+    return;
+  }
+  el.innerHTML = list
+    .map((s) => {
+      const errPct = s.total ? Math.round((1 - s.correct / s.total) * 100) : 0;
+      const d = new Date(s.date);
+      return `<div class="error-item" style="cursor:default;"><span class="move-no">${d.toLocaleDateString()}</span><span class="error-item-label">${s.correct} coup(s) en ${s.total} essai(s) (${errPct}% d'erreur)</span></div>`;
+    })
+    .join("");
+}

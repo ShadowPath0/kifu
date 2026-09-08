@@ -28,10 +28,13 @@ function renderNav(active) {
     `<span class="lang-switch">` +
     `<button type="button" class="lang-btn${lang === "fr" ? " active" : ""}" data-lang="fr">FR</button>` +
     `<button type="button" class="lang-btn${lang === "en" ? " active" : ""}" data-lang="en">EN</button>` +
-    `</span>`;
+    `</span>` +
+    `<button type="button" class="theme-toggle" id="theme-toggle" aria-label="Thème"></button>`;
   root.querySelectorAll(".lang-btn").forEach((btn) => {
     btn.addEventListener("click", () => setLang(btn.dataset.lang));
   });
+  updateThemeToggleIcon();
+  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
   const toggle = document.getElementById("nav-toggle");
   const navLinks = document.getElementById("nav-links");
   toggle.addEventListener("click", () => {

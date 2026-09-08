@@ -840,3 +840,39 @@ function applyStaticTranslations(root) {
 }
 
 document.addEventListener("DOMContentLoaded", () => applyStaticTranslations());
+
+// ---------- thème clair/sombre ----------
+// Par défaut on suit la préférence système (géré en pur CSS via prefers-color-scheme,
+// zéro flash). localStorage ne sert qu'à mémoriser un choix explicite qui doit primer
+// sur la préférence système.
+
+const THEME_KEY = "kifu_v1_theme";
+
+function getStoredTheme() {
+  const v = localStorage.getItem(THEME_KEY);
+  return v === "light" || v === "dark" ? v : null;
+}
+
+function getEffectiveTheme() {
+  return getStoredTheme() || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+}
+
+function setTheme(theme) {
+  localStorage.setItem(THEME_KEY, theme);
+  document.documentElement.setAttribute("data-theme", theme);
+  updateThemeToggleIcon();
+}
+
+function toggleTheme() {
+  setTheme(getEffectiveTheme() === "dark" ? "light" : "dark");
+}
+
+function updateThemeToggleIcon() {
+  const btn = document.getElementById("theme-toggle");
+  if (btn) btn.textContent = getEffectiveTheme() === "dark" ? "☀️" : "🌙";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const stored = getStoredTheme();
+  if (stored) document.documentElement.setAttribute("data-theme", stored);
+});

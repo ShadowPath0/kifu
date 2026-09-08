@@ -1,3 +1,5 @@
+let activeWeek = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   renderNav("challenges");
   renderChallenges();
@@ -32,23 +34,54 @@ function challengeActionHtml(c) {
   return "";
 }
 
-function renderChallenges() {
-  const el = document.getElementById("challenges-list");
-  const done = new Set(doneIds());
-  const sorted = [...CHALLENGES].sort((a, b) => (a.id < b.id ? 1 : -1)); // plus récent (id) en premier
+// Groupe les défis par semaine (un onglet par semaine, la plus récente en premier) au
+// lieu d'une longue liste plate — plus lisible dès qu'il y a plusieurs semaines d'archivées.
+function groupByWeek(list) {
+  const order = []; // ordre d'apparition des libellés de semaine
+  const byWeek = new Map();
+  for (const c of [...list].sort((a, b) => (a.id < b.id ? 1 : -1))) {
+    if (!byWeek.has(c.weekLabel)) {
+      byWeek.set(c.weekLabel, []);
+      order.push(c.weekLabel);
+    }
+    byWeek.get(c.weekLabel).push(c);
+  }
+  return order.map((week) => ({ week, items: byWeek.get(week) }));
+}
 
-  if (!sorted.length) {
-    el.innerHTML = `<div class="panel muted">${t("challenges.empty")}</div>`;
+function renderChallenges() {
+  const listEl = document.getElementById("challenges-list");
+  const tabsEl = document.getElementById("challenges-tabs");
+
+  if (!CHALLENGES.length) {
+    tabsEl.innerHTML = "";
+    listEl.innerHTML = `<div class="panel muted">${t("challenges.empty")}</div>`;
     return;
   }
 
-  el.innerHTML = sorted
+  const groups = groupByWeek(CHALLENGES);
+  if (!activeWeek || !groups.some((g) => g.week === activeWeek)) activeWeek = groups[0].week;
+
+  tabsEl.innerHTML = groups
+    .map((g) => `<button type="button" class="tab-btn${g.week === activeWeek ? " active" : ""}" data-week="${escapeHtml(g.week)}">${escapeHtml(g.week)}</button>`)
+    .join("");
+  tabsEl.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      activeWeek = btn.dataset.week;
+      renderChallenges();
+    });
+  });
+
+  const done = new Set(doneIds());
+  const activeGroup = groups.find((g) => g.week === activeWeek);
+
+  listEl.innerHTML = activeGroup.items
     .map((c) => {
       const isDone = done.has(c.id);
       return `
       <div class="panel" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
         <div style="flex:1;min-width:240px;">
-          <div class="muted" style="font-size:0.78rem;">${escapeHtml(c.weekLabel)} · <span class="challenge-type-badge">${t("challenges.type." + c.type)}</span></div>
+          <div class="muted" style="font-size:0.78rem;"><span class="challenge-type-badge">${t("challenges.type." + c.type)}</span></div>
           <h2 style="margin:4px 0 6px;">${escapeHtml(c.title)}</h2>
           <p class="muted" style="margin:0;">${escapeHtml(c.description)}</p>
         </div>
@@ -63,7 +96,7 @@ function renderChallenges() {
     })
     .join("");
 
-  el.querySelectorAll("input[data-done]").forEach((cb) => {
+  listEl.querySelectorAll("input[data-done]").forEach((cb) => {
     cb.addEventListener("change", () => setDone(cb.dataset.done, cb.checked));
   });
 }

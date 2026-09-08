@@ -12,7 +12,7 @@ async function loadCategories() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><span class="color-swatch" style="background:${c.color}"></span></td>
-      <td><input type="text" value="${escapeHtml(c.name)}" data-id="${c.id}" class="rename-input" style="border:none;background:transparent;padding:0;font-size:0.9rem;" /></td>
+      <td><input type="text" value="${escapeHtml(categoryDisplayName(c))}" data-id="${c.id}" class="rename-input" style="border:none;background:transparent;padding:0;font-size:0.9rem;" /></td>
       <td>${c.is_preset ? `<span class="muted">${t("categories.preset")}</span>` : `<span class="muted">${t("categories.custom")}</span>`}</td>
       <td><button class="danger icon-btn" data-id="${c.id}">${t("categories.delete")}</button></td>
     `;

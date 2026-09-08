@@ -16,6 +16,7 @@ const I18N = {
     "nav.reports": "Rapports",
     "nav.categories": "Étiquettes",
     "nav.data": "Sauvegarde",
+    "nav.challenges": "Défis",
 
     "dashboard.title": "Dashboard",
     "dashboard.filters.from": "Du",
@@ -358,6 +359,16 @@ const I18N = {
     "game.modal.pickOnBoard": "📍 Indiquer sur le plateau",
     "game.modal.cancel": "Annuler",
     "game.modal.save": "Enregistrer",
+
+    "challenges.title": "Défis",
+    "challenges.intro": "Défis communautaires, les mêmes pour tout le monde. Cochez-les au fur et à mesure — c'est gardé uniquement dans votre navigateur, personne d'autre ne le voit.",
+    "challenges.empty": "Aucun défi pour l'instant.",
+    "challenges.play": "🎯 Relever le défi",
+    "challenges.open": "↗ Ouvrir",
+    "challenges.markDone": "Fait !",
+    "challenges.type.memorize": "Mémorisation",
+    "challenges.type.tsumego": "Tsumego",
+    "challenges.type.custom": "Défi",
   },
   en: {
     "nav.dashboard": "Dashboard",
@@ -368,6 +379,7 @@ const I18N = {
     "nav.reports": "Reports",
     "nav.categories": "Tags",
     "nav.data": "Backup",
+    "nav.challenges": "Challenges",
 
     "dashboard.title": "Dashboard",
     "dashboard.filters.from": "From",
@@ -710,6 +722,16 @@ const I18N = {
     "game.modal.pickOnBoard": "📍 Pick on the board",
     "game.modal.cancel": "Cancel",
     "game.modal.save": "Save",
+
+    "challenges.title": "Challenges",
+    "challenges.intro": "Community challenges, the same for everyone. Check them off as you go — this is kept only in your browser, nobody else sees it.",
+    "challenges.empty": "No challenge yet.",
+    "challenges.play": "🎯 Take the challenge",
+    "challenges.open": "↗ Open",
+    "challenges.markDone": "Done!",
+    "challenges.type.memorize": "Memorization",
+    "challenges.type.tsumego": "Tsumego",
+    "challenges.type.custom": "Challenge",
   },
 };
 

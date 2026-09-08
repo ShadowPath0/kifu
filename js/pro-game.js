@@ -5,6 +5,8 @@ let currentMoveIndex = 0;
 let guessScore = { correct: 0, total: 0 };
 let guessFinished = false;
 let guessAdvancing = false; // true pendant le court délai entre un bon coup et le suivant
+let guessFromMove = 1;
+let guessToMove = Infinity; // permet de scoper un défi à une plage de coups (ex : mémoriser les coups 1 à 20)
 
 document.addEventListener("DOMContentLoaded", () => {
   renderNav("pro-games");
@@ -16,6 +18,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector("main").innerHTML = `<div class='panel'>${t("proGames.notFound")}</div>`;
     return;
   }
+  const fromParam = parseInt(params.get("from"), 10);
+  const toParam = parseInt(params.get("to"), 10);
+  if (!isNaN(fromParam) && fromParam > 0) guessFromMove = fromParam;
+  if (!isNaN(toParam) && toParam > 0) guessToMove = toParam;
 
   document.getElementById("pg-title").textContent = game.title;
   document.getElementById("pg-summary").textContent =
@@ -89,12 +95,14 @@ function setupGuessMode() {
   document.getElementById("guess-panel").classList.remove("hidden");
   document.getElementById("guess-finish-btn").addEventListener("click", finishGuessSession);
   document.getElementById("goban-canvas").addEventListener("click", handleGuessClick);
+  currentMoveIndex = Math.max(0, Math.min(boardData.states.length - 1, guessFromMove - 1));
   renderHistory();
   advanceGuessPrompt();
 }
 
 // Avance jusqu'au prochain coup qui nécessite vraiment une devinette (les passes
 // s'enchaînent automatiquement, sans quoi il n'y aurait rien à cliquer dessus).
+// S'arrête à guessToMove si le défi porte sur une plage de coups précise.
 function advanceGuessPrompt() {
   document.getElementById("guess-feedback").innerHTML = "";
 
@@ -102,7 +110,7 @@ function advanceGuessPrompt() {
     currentMoveIndex++;
   }
 
-  const nextMove = boardData.moves[currentMoveIndex + 1];
+  const nextMove = currentMoveIndex < guessToMove ? boardData.moves[currentMoveIndex + 1] : null;
   goban.draw(boardData.states[currentMoveIndex], boardData.moves[currentMoveIndex], [], [], []);
 
   if (!nextMove) {

@@ -99,6 +99,12 @@ h1, h2, h3 {
   color: white;
 }
 
+.challenge-type-badge {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
 main {
   max-width: 1180px;
   margin: 0 auto;

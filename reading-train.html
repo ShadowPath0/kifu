@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Entraînement de lecture — Kifu</title>
+  <link rel="stylesheet" href="css/style.css?v=101" />
+</head>
+<body>
+  <div id="nav-root"></div>
+  <main>
+    <div class="panel panel-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 id="rt-title">…</h1>
+        <div id="rt-summary" class="muted"></div>
+      </div>
+      <a class="btn" href="reading.html" data-i18n="reading.back">← Retour à la bibliothèque</a>
+    </div>
+
+    <div class="panel">
+      <div class="goban-wrap">
+        <div class="review-board-col">
+          <canvas id="goban-canvas"></canvas>
+        </div>
+
+        <div class="error-sidebar">
+          <div id="rt-study-panel">
+            <h3 data-i18n="reading.study.title">👀 Mémorisez la séquence</h3>
+            <p id="rt-study-status" class="muted"></p>
+            <div class="modal-actions" style="justify-content:flex-start;">
+              <button id="rt-rewatch-btn" data-i18n="reading.study.rewatch">↺ Revoir</button>
+              <button class="primary" id="rt-start-btn" data-i18n="reading.study.start">Je suis prêt·e →</button>
+            </div>
+          </div>
+
+          <div id="rt-practice-panel" class="hidden">
+            <h3 data-i18n="reading.practice.title">🎯 Reproduisez la séquence</h3>
+            <div id="rt-status" class="muted"></div>
+            <div id="rt-feedback" style="margin-top:10px;"></div>
+            <div class="modal-actions" style="justify-content:flex-start;margin-top:12px;">
+              <button id="rt-rewatch-btn2" data-i18n="reading.study.rewatch">↺ Revoir la séquence</button>
+            </div>
+
+            <div id="rt-summary-box" class="hidden" style="margin-top:16px;padding:12px 14px;border:1px solid #86efac;border-radius:var(--radius);background:#f0fdf4;"></div>
+
+            <h3 style="margin-top:20px;" data-i18n="reading.history">Historique</h3>
+            <div id="rt-history"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/sgf.js?v=101"></script>
+  <script src="js/api.js?v=101"></script>
+  <script src="js/i18n.js?v=101"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/goban.js?v=101"></script>
+  <script src="js/reading-train.js?v=101"></script>
+</body>
+</html>

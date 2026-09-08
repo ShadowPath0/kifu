@@ -7,6 +7,7 @@ function renderNav(active) {
     { href: "games.html", label: t("nav.games"), key: "games" },
     { href: "pro-games.html", label: t("nav.proGames"), key: "pro-games" },
     { href: "challenges.html", label: t("nav.challenges"), key: "challenges" },
+    { href: "reading.html", label: t("nav.reading"), key: "reading" },
     { href: "progression.html", label: t("nav.progression"), key: "progression" },
     { href: "reports.html", label: t("nav.reports"), key: "reports" },
     { href: "categories.html", label: t("nav.categories"), key: "categories" },

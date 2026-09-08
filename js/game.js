@@ -705,6 +705,7 @@ function setupBoardControls() {
     renderBranchView();
   });
   document.getElementById("move-tree-wrap").addEventListener("click", handleMoveTreeClick);
+  document.getElementById("reading-add-range-btn").addEventListener("click", addRangeToReadingLibrary);
 }
 
 function navigateTo(i) {
@@ -857,7 +858,7 @@ function renderBranchesList() {
       (b) =>
         `<span class="branch-chip" data-view="${b.id}">${escapeHtml(
           t("game.branches.chip", { name: b.name, n: b.moves.length, s: b.moves.length > 1 ? "s" : "" })
-        )} <button data-del-branch="${b.id}">✕</button></span>`
+        )} <button data-add-reading="${b.id}" title="${escapeHtml(t("reading.addFromBranch"))}">📚</button><button data-del-branch="${b.id}">✕</button></span>`
     )
     .join("");
   el.querySelectorAll(".branch-chip").forEach((chip) => {
@@ -873,7 +874,59 @@ function renderBranchesList() {
       deleteBranch(parseInt(btn.dataset.delBranch, 10));
     });
   });
+  el.querySelectorAll("button[data-add-reading]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const branch = branches.find((b) => b.id === parseInt(btn.dataset.addReading, 10));
+      if (branch) addBranchToReadingLibrary(branch);
+    });
+  });
   renderMoveTree();
+}
+
+// ---------- bibliothèque de lecture (façon Go Magic) ----------
+
+function addBranchToReadingLibrary(branch) {
+  const anchorStones = boardData.states[branch.anchor_move_number];
+  const defaultName = t("reading.defaultNameBranch", { name: branch.name, game: game.title });
+  const name = prompt(t("reading.namePrompt"), defaultName);
+  if (name === null) return;
+  saveReadingSequence(name || defaultName, branch.anchor_move_number, anchorStones, branch.moves);
+}
+
+function addRangeToReadingLibrary() {
+  const from = parseInt(document.getElementById("reading-from").value, 10);
+  const to = parseInt(document.getElementById("reading-to").value, 10);
+  if (isNaN(from) || isNaN(to) || from < 1 || to < from || to > boardData.states.length - 1) {
+    showToast(t("reading.invalidRange"), true);
+    return;
+  }
+  const anchorStones = boardData.states[from - 1];
+  const moves = boardData.moves.slice(from, to + 1).filter((m) => !m.pass);
+  if (!moves.length) {
+    showToast(t("reading.invalidRange"), true);
+    return;
+  }
+  const defaultName = t("reading.defaultNameRange", { game: game.title, from, to });
+  const name = prompt(t("reading.namePrompt"), defaultName);
+  if (name === null) return;
+  saveReadingSequence(name || defaultName, from - 1, anchorStones, moves);
+}
+
+function saveReadingSequence(name, anchorMoveNumber, anchorStones, moves) {
+  const sequences = loadCollection("reading_sequences");
+  sequences.push({
+    id: nextId("reading_sequences"),
+    name,
+    gameTitle: game.title,
+    anchorMoveNumber,
+    boardSize: boardData.size,
+    anchorStones: anchorStones.map((s) => ({ row: s.row, col: s.col, color: s.color })),
+    moves: moves.map((m) => ({ row: m.row, col: m.col, color: m.color })),
+    createdAt: nowIso(),
+  });
+  saveCollection("reading_sequences", sequences);
+  showToast(t("reading.added"));
 }
 
 // ---------- arbre des variantes (façon OGS) ----------

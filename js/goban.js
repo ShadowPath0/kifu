@@ -58,7 +58,32 @@ class Goban {
     return { row, col };
   }
 
-  draw(stones, lastMove, markers, suggestions, symbols, moveNumbers) {
+  drawStoneShape(x, y, radius, color, alpha) {
+    const ctx = this.ctx;
+    if (alpha !== undefined) ctx.save(), (ctx.globalAlpha = alpha);
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    if (color === "b") {
+      const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 1, x, y, radius);
+      grad.addColorStop(0, "#5a5a5a");
+      grad.addColorStop(1, "#0a0a0a");
+      ctx.fillStyle = grad;
+    } else {
+      const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 1, x, y, radius);
+      grad.addColorStop(0, "#ffffff");
+      grad.addColorStop(1, "#d8d8d8");
+      ctx.fillStyle = grad;
+    }
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    if (alpha !== undefined) ctx.restore();
+  }
+
+  // fadeStone : {row, col, color, alpha} — une pierre dessinée à part avec une opacité
+  // variable, utilisée pour l'animation de fondu en mode entraînement "reading".
+  draw(stones, lastMove, markers, suggestions, symbols, moveNumbers, fadeStone) {
     const ctx = this.ctx;
     const s = this.canvasSize;
     ctx.clearRect(0, 0, s, s);
@@ -96,23 +121,13 @@ class Goban {
     const radius = this.cell / 2 - 1;
     for (const st of stones) {
       const [x, y] = this.posToPixel(st.row, st.col);
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      if (st.color === "b") {
-        const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 1, x, y, radius);
-        grad.addColorStop(0, "#5a5a5a");
-        grad.addColorStop(1, "#0a0a0a");
-        ctx.fillStyle = grad;
-      } else {
-        const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 1, x, y, radius);
-        grad.addColorStop(0, "#ffffff");
-        grad.addColorStop(1, "#d8d8d8");
-        ctx.fillStyle = grad;
-      }
-      ctx.fill();
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
+      this.drawStoneShape(x, y, radius, st.color);
+    }
+
+    // pierre en fondu (animation de disparition, mode entraînement "reading")
+    if (fadeStone) {
+      const [x, y] = this.posToPixel(fadeStone.row, fadeStone.col);
+      this.drawStoneShape(x, y, radius, fadeStone.color, fadeStone.alpha);
     }
 
     // last move marker (seulement si on n'affiche pas déjà les numéros d'ordre —

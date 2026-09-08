@@ -106,6 +106,24 @@ function resetBoardToAnchor() {
   goban.draw(sequence.anchorStones, null, [], [], []);
 }
 
+// Comme demandé : la pierre juste posée reste visible un court instant puis disparaît en
+// fondu (pas une coupure instantanée) avant de passer au coup suivant.
+function fadeOutStone(stone, onDone) {
+  const duration = 350;
+  const start = performance.now();
+  function frame(now) {
+    const alpha = Math.max(0, 1 - (now - start) / duration);
+    if (alpha > 0) {
+      goban.draw(sequence.anchorStones, null, [], [], [], [], { row: stone.row, col: stone.col, color: stone.color, alpha });
+      requestAnimationFrame(frame);
+    } else {
+      resetBoardToAnchor();
+      onDone();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
 function promptStep() {
   document.getElementById("rt-feedback").innerHTML = "";
   const move = sequence.moves[step];
@@ -142,15 +160,16 @@ function handlePracticeClick(e) {
     goban.draw(sequence.anchorStones.concat([move]), move, [], [], []);
     document.getElementById("rt-feedback").innerHTML = `<div style="color:#166534;font-weight:600;">${t("proGame.correct")}</div>`;
     setTimeout(() => {
-      awaiting = false;
-      step++;
-      if (step >= sequence.moves.length) {
-        finishAttempt(true);
-      } else {
-        resetBoardToAnchor();
-        promptStep();
-      }
-    }, 450);
+      fadeOutStone(move, () => {
+        awaiting = false;
+        step++;
+        if (step >= sequence.moves.length) {
+          finishAttempt(true);
+        } else {
+          promptStep();
+        }
+      });
+    }, 400);
   } else {
     document.getElementById("rt-feedback").innerHTML = `<div style="color:#b91c1c;font-weight:600;">${t("reading.practice.wrong")}</div>`;
     setTimeout(() => {

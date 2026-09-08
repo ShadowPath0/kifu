@@ -8,7 +8,7 @@
 const CHALLENGES = [
   {
     id: "week-2026-09-08-cho-seo",
-    weekLabel: "Challenge du 8 septembre 2026",
+    weekDate: "2026-09-08",
     title: "Mémoriser Cho Hun-hyeon vs Seo Pong-su (14e Kiwang, 1989)",
     description: "Rejouez de mémoire cette finale du Kiwang, jusqu'au coup 150, en mode Deviner le coup.",
     type: "memorize",
@@ -18,7 +18,7 @@ const CHALLENGES = [
   },
   {
     id: "week-2026-09-08-shin-xie",
-    weekLabel: "Challenge du 8 septembre 2026",
+    weekDate: "2026-09-08",
     title: "Mémoriser Shin Jinseo vs Xie Ke (Coupe Lanke de Quzhou, 2026)",
     description: "Rejouez de mémoire cette partie récente entre deux 9 dan, jusqu'au coup 150, en mode Deviner le coup.",
     type: "memorize",
@@ -28,7 +28,7 @@ const CHALLENGES = [
   },
   {
     id: "week-2026-09-08-mok-lee",
-    weekLabel: "Challenge du 8 septembre 2026",
+    weekDate: "2026-09-08",
     title: "Mémoriser Mok Jinseok vs Lee Changho",
     description: "Rejouez de mémoire cette partie (elle se termine par abandon au coup 119), en mode Deviner le coup.",
     type: "memorize",

@@ -10,8 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
         ${g.event ? `<div class="muted" style="font-size:0.82rem;">${escapeHtml(g.event)}</div>` : ""}
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
-        <a class="btn" href="pro-game.html?id=${encodeURIComponent(g.id)}&mode=normal">Rejouer</a>
-        <a class="btn primary" href="pro-game.html?id=${encodeURIComponent(g.id)}&mode=guess">🎯 Deviner le coup</a>
+        <a class="btn" href="pro-game.html?id=${encodeURIComponent(g.id)}&mode=normal">${t("proGames.replay")}</a>
+        <a class="btn primary" href="pro-game.html?id=${encodeURIComponent(g.id)}&mode=guess">${t("proGames.guess")}</a>
       </div>
     </div>`
   ).join("");

@@ -80,6 +80,25 @@ h1, h2, h3 {
   font-weight: 600;
 }
 
+.lang-switch {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.lang-btn {
+  padding: 4px 9px;
+  font-size: 0.76rem;
+  border-radius: 6px;
+}
+
+.lang-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 main {
   max-width: 1180px;
   margin: 0 auto;

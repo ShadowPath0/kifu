@@ -49,14 +49,22 @@ async function refresh() {
     renderRecentGames(games.slice(0, 8));
     renderHeatmap(heatmap);
   } catch (err) {
-    showToast("Erreur de chargement : " + err.message, true);
+    showToast(t("dashboard.loadError", { msg: err.message }), true);
   }
 }
 
 const HEATMAP_PHASES = ["fuseki", "milieu", "yose"];
 const HEATMAP_SEVERITIES = ["mineure", "moyenne", "critique"];
-const HEATMAP_PHASE_LABEL = { fuseki: "Fuseki", milieu: "Milieu", yose: "Yose" };
-const HEATMAP_SEV_LABEL = { mineure: "Mineure", moyenne: "Moyenne", critique: "Critique" };
+const HEATMAP_PHASE_LABEL = {
+  fuseki: () => t("dashboard.filters.phaseFuseki"),
+  milieu: () => t("dashboard.filters.phaseMilieu"),
+  yose: () => t("dashboard.filters.phaseYose"),
+};
+const HEATMAP_SEV_LABEL = {
+  mineure: () => t("dashboard.filters.severityMineure"),
+  moyenne: () => t("dashboard.filters.severityMoyenne"),
+  critique: () => t("dashboard.filters.severityCritique"),
+};
 
 function renderHeatmap(cells) {
   const container = document.getElementById("heatmap");
@@ -70,10 +78,10 @@ function renderHeatmap(cells) {
   const max = Math.max(...cells.map((c) => c.count), 1);
 
   let html = '<table class="heatmap-table"><thead><tr><th></th>';
-  for (const phase of HEATMAP_PHASES) html += `<th>${HEATMAP_PHASE_LABEL[phase]}</th>`;
+  for (const phase of HEATMAP_PHASES) html += `<th>${HEATMAP_PHASE_LABEL[phase]()}</th>`;
   html += "</tr></thead><tbody>";
   for (const sev of HEATMAP_SEVERITIES) {
-    html += `<tr><th>${HEATMAP_SEV_LABEL[sev]}</th>`;
+    html += `<tr><th>${HEATMAP_SEV_LABEL[sev]()}</th>`;
     for (const phase of HEATMAP_PHASES) {
       const count = byKey.get(`${phase}|${sev}`) || 0;
       const alpha = count ? 0.15 + 0.75 * (count / max) : 0;
@@ -89,9 +97,9 @@ function renderStats(games, pareto) {
   const totalErrors = pareto.reduce((s, p) => s + p.count, 0);
   const el = document.getElementById("stat-cards");
   el.innerHTML = `
-    <div class="stat-card"><div class="value">${games.length}</div><div class="label">Parties</div></div>
-    <div class="stat-card"><div class="value">${totalErrors}</div><div class="label">Erreurs taguées</div></div>
-    <div class="stat-card"><div class="value">${games.length ? (totalErrors / games.length).toFixed(1) : "—"}</div><div class="label">Erreurs / partie</div></div>
+    <div class="stat-card"><div class="value">${games.length}</div><div class="label">${t("dashboard.stat.games")}</div></div>
+    <div class="stat-card"><div class="value">${totalErrors}</div><div class="label">${t("dashboard.stat.errors")}</div></div>
+    <div class="stat-card"><div class="value">${games.length ? (totalErrors / games.length).toFixed(1) : "—"}</div><div class="label">${t("dashboard.stat.errorsPerGame")}</div></div>
   `;
 }
 
@@ -115,7 +123,7 @@ function renderPareto(entries) {
 function renderRecentGames(games) {
   const el = document.getElementById("recent-games");
   if (!games.length) {
-    el.innerHTML = '<p class="muted">Aucune partie encore importée.</p>';
+    el.innerHTML = `<p class="muted">${t("dashboard.recent.empty")}</p>`;
     return;
   }
   el.innerHTML = games
@@ -124,7 +132,7 @@ function renderRecentGames(games) {
       <div class="error-item" onclick="window.location.href='game.html?id=${g.id}'">
         <div style="flex:1;">
           <div>${escapeHtml(g.title)}</div>
-          <div class="muted">${escapeHtml(g.date_played || "")} · ${g.error_count} erreur(s)</div>
+          <div class="muted">${escapeHtml(g.date_played || "")} · ${t("dashboard.errorCount", { n: g.error_count })}</div>
         </div>
       </div>`
     )

@@ -54,20 +54,20 @@ async function tryFetchFromLink(url) {
     statusEl.textContent = "";
     return;
   }
-  statusEl.textContent = "Récupération du SGF depuis OGS…";
+  statusEl.textContent = t("import.linkFetching");
   const fetched = await fetchSgfFromLink(url);
   if (!fetched) {
-    statusEl.textContent = "Impossible de récupérer automatiquement le SGF depuis ce lien — la partie sera importée comme simple lien externe.";
+    statusEl.textContent = t("import.linkFailed");
     return;
   }
   sgfContent = fetched;
-  document.getElementById("sgf-status").textContent = "SGF récupéré automatiquement depuis OGS ✓";
-  statusEl.textContent = "✓ SGF récupéré — la partie s'ouvrira directement dans Kifu avec un plateau interactif.";
+  document.getElementById("sgf-status").textContent = t("import.linkFetched");
+  statusEl.textContent = t("import.linkFetchedStatus");
   if (!document.getElementById("f-platform").value) document.getElementById("f-platform").value = "OGS";
   try {
     const preview = await api.parseSgf(sgfContent);
     fillFromPreview(preview);
-    showToast("SGF récupéré, formulaire pré-rempli");
+    showToast(t("import.linkPrefilled"));
   } catch (_) {
     /* on garde quand même le SGF même si le pré-remplissage échoue */
   }
@@ -75,20 +75,19 @@ async function tryFetchFromLink(url) {
 
 function handleFile(file) {
   if (!file.name.toLowerCase().endsWith(".sgf")) {
-    document.getElementById("sgf-status").textContent = "Ce fichier n'a pas l'extension .sgf";
+    document.getElementById("sgf-status").textContent = t("import.sgfNotSgf");
     return;
   }
   const reader = new FileReader();
   reader.onload = async () => {
     sgfContent = reader.result;
-    document.getElementById("sgf-status").textContent = `Fichier chargé : ${file.name}`;
+    document.getElementById("sgf-status").textContent = t("import.sgfLoaded", { name: file.name });
     try {
       const preview = await api.parseSgf(sgfContent);
       fillFromPreview(preview);
-      showToast("SGF analysé, formulaire pré-rempli");
+      showToast(t("import.sgfParsed"));
     } catch (err) {
-      document.getElementById("sgf-status").textContent =
-        `Fichier chargé (${file.name}) mais parsing impossible : ${err.message}`;
+      document.getElementById("sgf-status").textContent = t("import.sgfLoadedButError", { name: file.name, msg: err.message });
     }
   };
   reader.readAsText(file);
@@ -130,9 +129,9 @@ async function submitGame() {
 
   try {
     const game = await api.createGame(payload);
-    showToast("Partie enregistrée");
+    showToast(t("import.saved"));
     window.location.href = `game.html?id=${game.id}`;
   } catch (err) {
-    errEl.textContent = "Erreur : " + err.message;
+    errEl.textContent = t("import.error", { msg: err.message });
   }
 }

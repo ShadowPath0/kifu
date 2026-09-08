@@ -39,7 +39,7 @@ async function loadGames() {
     allGames = await api.listGames(filters);
     renderTable();
   } catch (err) {
-    showToast("Erreur de chargement : " + err.message, true);
+    showToast(t("games.loadError", { msg: err.message }), true);
   }
 }
 
@@ -62,7 +62,7 @@ function renderTable() {
       <td>${escapeHtml(g.date_played || "—")}</td>
       <td>${escapeHtml(g.opponent_name || "—")}</td>
       <td>${escapeHtml(g.opponent_rank || "—")}</td>
-      <td>${g.user_color === "black" ? "Noir" : g.user_color === "white" ? "Blanc" : "—"}</td>
+      <td>${g.user_color === "black" ? t("colorBlack") : g.user_color === "white" ? t("colorWhite") : "—"}</td>
       <td>${escapeHtml(g.result || "—")}</td>
       <td>${escapeHtml(g.platform || "—")}</td>
       <td>${g.error_count}</td>

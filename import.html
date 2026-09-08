@@ -9,109 +9,109 @@
 <body>
   <div id="nav-root"></div>
   <main>
-    <h1>Importer une partie</h1>
+    <h1 data-i18n="import.title">Importer une partie</h1>
 
     <div class="panel">
-      <h2>1. Fichier SGF</h2>
+      <h2 data-i18n="import.step1.title">1. Fichier SGF</h2>
       <div id="dropzone" class="dropzone">
-        Glissez-déposez un fichier .sgf ici, ou <label for="sgf-input" style="display:inline;color:var(--accent-dark);cursor:pointer;text-decoration:underline;">parcourir</label>
+        <span data-i18n="import.dropzone.text">Glissez-déposez un fichier .sgf ici, ou </span><label for="sgf-input" style="display:inline;color:var(--accent-dark);cursor:pointer;text-decoration:underline;" data-i18n="import.dropzone.browse">parcourir</label>
         <input id="sgf-input" type="file" accept=".sgf" class="hidden" />
       </div>
       <div id="sgf-status" class="muted" style="margin-top:8px;"></div>
     </div>
 
     <div class="panel">
-      <h2>2. Ou lien d'une partie/review en ligne</h2>
-      <label for="external-link">Lien (ex : partie ou review OGS)</label>
-      <input id="external-link" type="url" placeholder="https://online-go.com/game/... ou /review/..." />
+      <h2 data-i18n="import.step2.title">2. Ou lien d'une partie/review en ligne</h2>
+      <label for="external-link" data-i18n="import.link.label">Lien (ex : partie ou review OGS)</label>
+      <input id="external-link" type="url" placeholder="https://online-go.com/game/... ou /review/..." data-i18n-placeholder="import.link.placeholder" />
       <div id="link-status" class="muted" style="margin-top:8px;"></div>
-      <p class="muted" style="margin-top:6px;">Pour les liens OGS, le SGF est récupéré automatiquement et la partie s'ouvre directement dans Kifu avec un plateau interactif — pas de redirection. Les autres sites sont juste enregistrés comme lien externe cliquable.</p>
+      <p class="muted" style="margin-top:6px;" data-i18n="import.link.hint">Pour les liens OGS, le SGF est récupéré automatiquement et la partie s'ouvre directement dans Kifu avec un plateau interactif — pas de redirection. Les autres sites sont juste enregistrés comme lien externe cliquable.</p>
     </div>
 
     <div class="panel">
-      <h2>3. Détails de la partie</h2>
-      <p class="muted">Pré-rempli automatiquement si un SGF a été importé. Le reste (rang adversaire, plateforme, cadence, couleur jouée) reste à compléter.</p>
+      <h2 data-i18n="import.step3.title">3. Détails de la partie</h2>
+      <p class="muted" data-i18n="import.step3.intro">Pré-rempli automatiquement si un SGF a été importé. Le reste (rang adversaire, plateforme, cadence, couleur jouée) reste à compléter.</p>
 
       <div class="field-row">
         <div>
-          <label for="f-title">Titre</label>
-          <input id="f-title" type="text" placeholder="auto-généré si vide" />
+          <label for="f-title" data-i18n="import.f.title">Titre</label>
+          <input id="f-title" type="text" placeholder="auto-généré si vide" data-i18n-placeholder="import.f.titlePlaceholder" />
         </div>
         <div>
-          <label for="f-date">Date jouée</label>
+          <label for="f-date" data-i18n="import.f.date">Date jouée</label>
           <input id="f-date" type="date" />
         </div>
       </div>
 
       <div class="field-row">
         <div>
-          <label for="f-opponent">Adversaire</label>
+          <label for="f-opponent" data-i18n="import.f.opponent">Adversaire</label>
           <input id="f-opponent" type="text" />
         </div>
         <div>
-          <label for="f-opponent-rank">Rang adversaire</label>
+          <label for="f-opponent-rank" data-i18n="import.f.opponentRank">Rang adversaire</label>
           <input id="f-opponent-rank" type="text" placeholder="ex : 3d, 1k" />
         </div>
       </div>
 
       <div class="field-row">
         <div>
-          <label for="f-color">Couleur jouée</label>
+          <label for="f-color" data-i18n="import.f.color">Couleur jouée</label>
           <select id="f-color">
             <option value="">—</option>
-            <option value="black">Noir</option>
-            <option value="white">Blanc</option>
+            <option value="black" data-i18n="dashboard.filters.colorBlack">Noir</option>
+            <option value="white" data-i18n="dashboard.filters.colorWhite">Blanc</option>
           </select>
         </div>
         <div>
-          <label for="f-user-rank">Votre rang à l'époque</label>
+          <label for="f-user-rank" data-i18n="import.f.userRank">Votre rang à l'époque</label>
           <input id="f-user-rank" type="text" placeholder="ex : 1d" />
         </div>
       </div>
 
       <div class="field-row">
         <div>
-          <label for="f-komi">Komi</label>
+          <label for="f-komi" data-i18n="import.f.komi">Komi</label>
           <input id="f-komi" type="number" step="0.5" />
         </div>
         <div>
-          <label for="f-result">Résultat</label>
+          <label for="f-result" data-i18n="import.f.result">Résultat</label>
           <input id="f-result" type="text" placeholder="ex : W+R, B+3.5" />
         </div>
       </div>
 
       <div class="field-row">
         <div>
-          <label for="f-time-control">Cadence</label>
+          <label for="f-time-control" data-i18n="import.f.timeControl">Cadence</label>
           <select id="f-time-control">
             <option value="">—</option>
-            <option value="blitz">Blitz</option>
-            <option value="normal">Normale</option>
-            <option value="correspondance">Correspondance</option>
-            <option value="libre">Libre</option>
+            <option value="blitz" data-i18n="import.f.timeBlitz">Blitz</option>
+            <option value="normal" data-i18n="import.f.timeNormal">Normale</option>
+            <option value="correspondance" data-i18n="import.f.timeCorrespondance">Correspondance</option>
+            <option value="libre" data-i18n="import.f.timeLibre">Libre</option>
           </select>
         </div>
         <div>
-          <label for="f-platform">Plateforme</label>
-          <input id="f-platform" type="text" placeholder="KGS, Fox, OGS, Tygem, tournoi papier..." />
+          <label for="f-platform" data-i18n="import.f.platform">Plateforme</label>
+          <input id="f-platform" type="text" placeholder="KGS, Fox, OGS, Tygem, tournoi papier..." data-i18n-placeholder="import.f.platformPlaceholder" />
         </div>
       </div>
 
-      <label for="f-comment">Commentaire libre (impressions générales, plan de jeu...)</label>
+      <label for="f-comment" data-i18n="import.f.comment">Commentaire libre (impressions générales, plan de jeu...)</label>
       <textarea id="f-comment" rows="5"></textarea>
 
       <div class="modal-actions" style="justify-content:flex-start;margin-top:20px;">
-        <button class="primary" id="submit-btn">Enregistrer la partie</button>
+        <button class="primary" id="submit-btn" data-i18n="import.submit">Enregistrer la partie</button>
       </div>
       <div id="form-error" class="error-msg"></div>
     </div>
   </main>
 
-  <script src="js/sgf.js?v=20"></script>
-  <script src="js/link-import.js?v=20"></script>
-  <script src="js/api.js?v=20"></script>
-  <script src="js/i18n.js?v=20"></script>
-  <script src="js/nav.js?v=20"></script>
-  <script src="js/import.js?v=20"></script>
+  <script src="js/sgf.js?v=21"></script>
+  <script src="js/link-import.js?v=21"></script>
+  <script src="js/api.js?v=21"></script>
+  <script src="js/i18n.js?v=21"></script>
+  <script src="js/nav.js?v=21"></script>
+  <script src="js/import.js?v=21"></script>
 </body>
 </html>

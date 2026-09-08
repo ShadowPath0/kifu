@@ -13,8 +13,8 @@ async function loadCategories() {
     tr.innerHTML = `
       <td><span class="color-swatch" style="background:${c.color}"></span></td>
       <td><input type="text" value="${escapeHtml(c.name)}" data-id="${c.id}" class="rename-input" style="border:none;background:transparent;padding:0;font-size:0.9rem;" /></td>
-      <td>${c.is_preset ? '<span class="muted">preset</span>' : '<span class="muted">perso</span>'}</td>
-      <td><button class="danger icon-btn" data-id="${c.id}">Suppr.</button></td>
+      <td>${c.is_preset ? `<span class="muted">${t("categories.preset")}</span>` : `<span class="muted">${t("categories.custom")}</span>`}</td>
+      <td><button class="danger icon-btn" data-id="${c.id}">${t("categories.delete")}</button></td>
     `;
     tbody.appendChild(tr);
   }
@@ -22,22 +22,22 @@ async function loadCategories() {
     input.addEventListener("change", async () => {
       try {
         await api.updateCategory(input.dataset.id, { name: input.value });
-        showToast("Étiquette renommée");
+        showToast(t("categories.renamed"));
       } catch (err) {
-        showToast("Erreur : " + err.message, true);
+        showToast(t("categories.error", { msg: err.message }), true);
         loadCategories();
       }
     });
   });
   tbody.querySelectorAll("button[data-id]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm("Supprimer cette étiquette ? Les erreurs qui l'utilisent seront affectées.")) return;
+      if (!confirm(t("categories.deleteConfirm"))) return;
       try {
         await api.deleteCategory(btn.dataset.id);
         loadCategories();
-        showToast("Étiquette supprimée");
+        showToast(t("categories.deleted"));
       } catch (err) {
-        showToast("Erreur : " + err.message, true);
+        showToast(t("categories.error", { msg: err.message }), true);
       }
     });
   });
@@ -49,15 +49,15 @@ async function addCategory() {
   const name = document.getElementById("new-name").value.trim();
   const color = document.getElementById("new-color").value;
   if (!name) {
-    errEl.textContent = "Le nom est requis";
+    errEl.textContent = t("categories.nameRequired");
     return;
   }
   try {
     await api.createCategory({ name, color });
     document.getElementById("new-name").value = "";
     loadCategories();
-    showToast("Étiquette ajoutée");
+    showToast(t("categories.added"));
   } catch (err) {
-    errEl.textContent = "Erreur : " + err.message;
+    errEl.textContent = t("categories.error", { msg: err.message });
   }
 }

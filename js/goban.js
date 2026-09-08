@@ -141,7 +141,7 @@ class Goban {
     if (lastMove && lastMove.pass) {
       const cx = this.canvasSize / 2;
       const cy = this.margin + (this.canvasSize - 2 * this.margin) * 0.5;
-      const label = `${lastMove.color === "b" ? "Noir" : "Blanc"} passe`;
+      const label = t("game.passBanner", { color: lastMove.color === "b" ? t("colorBlack") : t("colorWhite") });
       ctx.font = "bold 20px sans-serif";
       const textWidth = ctx.measureText(label).width;
       const paddingX = 18;

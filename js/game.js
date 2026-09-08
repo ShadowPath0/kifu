@@ -1,5 +1,12 @@
-const PHASE_LABEL = { fuseki: "Fuseki", milieu: "Milieu", yose: "Yose" };
-const COLOR_LABEL = { black: "Noir", white: "Blanc" };
+function phaseLabel(phase) {
+  return t({ fuseki: "dashboard.filters.phaseFuseki", milieu: "dashboard.filters.phaseMilieu", yose: "dashboard.filters.phaseYose" }[phase]);
+}
+function userColorLabel(color) {
+  return color === "black" ? t("colorBlack") : t("colorWhite");
+}
+function userColorBW(color) {
+  return color === "b" ? t("colorBlack") : t("colorWhite");
+}
 
 let gameId, game, categories, boardData, errors, goban;
 let currentMoveIndex = 0;
@@ -23,15 +30,19 @@ let remoteDraftBoard = null;
 let activeBranchId = null;
 let pendingBranchSync = false;
 
-const MARKER_TOOL_LABEL = {
-  triangle: "Triangle",
-  square: "Carré",
-  circle: "Cercle",
-  cross: "Croix",
-  letter: "Lettre",
-  number: "Chiffre",
-  erase: "Effacer",
-};
+function markerToolLabel(tool) {
+  return t(
+    {
+      triangle: "game.symbols.triangle",
+      square: "game.symbols.square",
+      circle: "game.symbols.circle",
+      cross: "game.symbols.cross",
+      letter: "game.symbols.letter",
+      number: "game.symbols.number",
+      erase: "game.symbols.erase",
+    }[tool]
+  );
+}
 
 const COL_LETTERS = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
 function formatCoord(row, col) {
@@ -60,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else if (roomCode) {
     enterGuestMode(roomCode);
   } else {
-    document.body.innerHTML = "<main><p>Aucune partie spécifiée.</p></main>";
+    document.body.innerHTML = `<main><p>${t("game.noGameSpecified")}</p></main>`;
   }
 });
 
@@ -68,7 +79,7 @@ async function loadOwnedGame() {
   try {
     [game, categories] = await Promise.all([api.getGame(gameId), api.listCategories()]);
   } catch (err) {
-    showToast("Impossible de charger la partie : " + err.message, true);
+    showToast(t("game.loadError", { msg: err.message }), true);
     return;
   }
   errors = game.errors || [];
@@ -90,8 +101,7 @@ async function loadOwnedGame() {
       setupBoardControls();
       setMoveIndex(boardData.states.length - 1);
     } catch (err) {
-      document.getElementById("no-sgf-msg").textContent =
-        "Erreur de chargement du plateau : " + err.message;
+      document.getElementById("no-sgf-msg").textContent = t("game.boardLoadError", { msg: err.message });
       document.getElementById("no-sgf-msg").classList.remove("hidden");
       setupManualErrors();
     }
@@ -109,15 +119,16 @@ function renderMeta() {
   document.getElementById("meta-title").textContent = game.title;
   const bits = [];
   if (game.black_player || game.white_player) {
-    bits.push(`Noir : ${game.black_player || "?"} · Blanc : ${game.white_player || "?"}`);
-    if (game.opponent_rank) bits.push(`Adversaire ${game.opponent_rank}`);
+    bits.push(`${t("colorBlack")} : ${game.black_player || "?"} · ${t("colorWhite")} : ${game.white_player || "?"}`);
+    if (game.opponent_rank) bits.push(`${t("game.meta.opponent")} ${game.opponent_rank}`);
   } else if (game.opponent_name) {
     bits.push(`vs ${game.opponent_name}${game.opponent_rank ? " (" + game.opponent_rank + ")" : ""}`);
   }
   if (game.date_played) bits.push(game.date_played);
-  if (game.user_color) bits.push(`Vous jouiez ${COLOR_LABEL[game.user_color]}${game.user_rank_at_time ? " — " + game.user_rank_at_time : ""}`);
-  if (game.result) bits.push(`Résultat : ${game.result}`);
-  if (game.komi !== null && game.komi !== undefined) bits.push(`Komi ${game.komi}`);
+  if (game.user_color)
+    bits.push(`${t("game.meta.youPlayed", { color: userColorLabel(game.user_color) })}${game.user_rank_at_time ? " — " + game.user_rank_at_time : ""}`);
+  if (game.result) bits.push(`${t("game.meta.result")} : ${game.result}`);
+  if (game.komi !== null && game.komi !== undefined) bits.push(`${t("game.meta.komi")} ${game.komi}`);
   if (game.time_control) bits.push(game.time_control);
   if (game.platform) bits.push(game.platform);
   document.getElementById("meta-summary").textContent = bits.join(" · ");
@@ -126,8 +137,8 @@ function renderMeta() {
   if (game.external_link) {
     const canAutoImport = !game.sgf_content && typeof isSupportedSgfLink === "function" && isSupportedSgfLink(game.external_link);
     extEl.innerHTML =
-      `<a href="${escapeHtml(game.external_link)}" target="_blank" rel="noopener">Ouvrir la review externe ↗</a>` +
-      (canAutoImport ? ` · <button id="retro-import-btn" class="icon-btn">🔄 Importer le SGF dans Kifu</button>` : "");
+      `<a href="${escapeHtml(game.external_link)}" target="_blank" rel="noopener">${t("game.meta.openExternal")}</a>` +
+      (canAutoImport ? ` · <button id="retro-import-btn" class="icon-btn">${t("game.meta.retroImport")}</button>` : "");
     if (canAutoImport) {
       document.getElementById("retro-import-btn").addEventListener("click", retroImportSgf);
     }
@@ -141,16 +152,16 @@ function renderMeta() {
 async function retroImportSgf() {
   const btn = document.getElementById("retro-import-btn");
   btn.disabled = true;
-  btn.textContent = "Récupération…";
+  btn.textContent = t("game.meta.retroImporting");
   const fetched = await fetchSgfFromLink(game.external_link);
   if (!fetched) {
-    showToast("Impossible de récupérer le SGF depuis ce lien", true);
+    showToast(t("game.meta.retroFailed"), true);
     btn.disabled = false;
-    btn.textContent = "🔄 Importer le SGF dans Kifu";
+    btn.textContent = t("game.meta.retroImport");
     return;
   }
   game = { ...game, ...(await api.updateGame(gameId, { sgf_content: fetched })) };
-  showToast("SGF importé — rechargement du plateau…");
+  showToast(t("game.meta.retroSuccess"));
   location.reload();
 }
 
@@ -189,20 +200,20 @@ function setupMetaEdit() {
       game = { ...game, ...(await api.updateGame(gameId, payload)) };
       renderMeta();
       form.classList.add("hidden");
-      showToast("Informations mises à jour");
+      showToast(t("game.meta.saved"));
     } catch (err) {
-      showToast("Erreur : " + err.message, true);
+      showToast(t("game.meta.error", { msg: err.message }), true);
     }
   });
 }
 
 async function deleteGame() {
-  if (!confirm("Supprimer définitivement cette partie et ses annotations ?")) return;
+  if (!confirm(t("game.meta.deleteConfirm"))) return;
   try {
     await api.deleteGame(gameId);
     window.location.href = "games.html";
   } catch (err) {
-    showToast("Erreur : " + err.message, true);
+    showToast(t("game.meta.error", { msg: err.message }), true);
   }
 }
 
@@ -210,9 +221,9 @@ function setupComment() {
   document.getElementById("comment-save-btn").addEventListener("click", async () => {
     try {
       await api.updateGame(gameId, { comment: document.getElementById("comment-text").value });
-      showToast("Commentaire enregistré");
+      showToast(t("game.comment.saved"));
     } catch (err) {
-      showToast("Erreur : " + err.message, true);
+      showToast(t("game.comment.error", { msg: err.message }), true);
     }
   });
 }
@@ -233,7 +244,7 @@ function renderQuickTagRow() {
   const el = document.getElementById("quick-tag-select");
   if (!el) return;
   el.innerHTML =
-    `<option value="" selected disabled>+ Annoter ce coup…</option>` +
+    `<option value="" selected disabled>${t("game.quickTagPlaceholder")}</option>` +
     categories.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
 }
 
@@ -246,7 +257,7 @@ function updateSeverityPickerUI() {
 async function submitNewError(payload) {
   if (Room.active && !Room.isOwner) {
     Room.send("intent:create-error", payload);
-    showToast("Envoyé à l'hôte…");
+    showToast(t("game.errors.sentToHost"));
     return null;
   }
   const created = await api.createGameError(gameId, payload);
@@ -268,9 +279,9 @@ async function quickTagCurrentMove(categoryId) {
   try {
     await submitNewError(payload);
     if (boardData) setMoveIndex(currentMoveIndex);
-    showToast("Erreur annotée");
+    showToast(t("game.errors.tagged"));
   } catch (err) {
-    showToast("Erreur : " + err.message, true);
+    showToast(t("game.meta.error", { msg: err.message }), true);
   }
 }
 
@@ -278,7 +289,7 @@ async function quickTagCurrentMove(categoryId) {
 
 function guardController() {
   if (Room.active && !Room.isController()) {
-    showToast("Vous n'avez pas le contrôle de la review.", true);
+    showToast(t("game.room.noControl"), true);
     return false;
   }
   return true;
@@ -289,7 +300,7 @@ async function createRoomFlow() {
   btn.disabled = true;
   try {
     const code = Room.randomCode();
-    await Room.connect(code, "Hôte");
+    await Room.connect(code, t("game.room.hostName"));
     Room.isOwner = true;
     Room.setController(Room.participantId);
     history.replaceState(null, "", `game.html?id=${gameId}&room=${code}`);
@@ -299,7 +310,7 @@ async function createRoomFlow() {
     document.getElementById("room-banner").classList.remove("hidden");
     updateRoomUI();
   } catch (err) {
-    showToast("Impossible de créer la salle : " + err.message, true);
+    showToast(t("game.room.createError", { msg: err.message }), true);
   } finally {
     btn.disabled = false;
   }
@@ -307,13 +318,13 @@ async function createRoomFlow() {
 
 async function hostExistingRoom(code) {
   try {
-    await Room.connect(code, "Hôte");
+    await Room.connect(code, t("game.room.hostName"));
     Room.isOwner = true;
     Room.setController(Room.participantId);
     document.getElementById("room-banner").classList.remove("hidden");
     updateRoomUI();
   } catch (err) {
-    showToast("Reconnexion à la salle impossible : " + err.message, true);
+    showToast(t("game.room.reconnectError", { msg: err.message }), true);
   }
 }
 
@@ -321,8 +332,8 @@ function copyRoomLink() {
   const input = document.getElementById("room-link-input");
   input.select();
   navigator.clipboard?.writeText(input.value).then(
-    () => showToast("Lien copié"),
-    () => showToast("Copie impossible, sélectionnez et copiez manuellement", true)
+    () => showToast(t("game.room.copied")),
+    () => showToast(t("game.room.copyFailed"), true)
   );
 }
 
@@ -331,14 +342,14 @@ function enterGuestMode(code) {
   document.getElementById("board-panel").classList.add("hidden");
   document.getElementById("guest-join-panel").classList.remove("hidden");
   document.getElementById("guest-join-btn").addEventListener("click", async () => {
-    const name = document.getElementById("guest-name-input").value.trim() || "Invité";
+    const name = document.getElementById("guest-name-input").value.trim() || t("game.room.guestDefaultName");
     document.getElementById("guest-join-panel").classList.add("hidden");
     document.getElementById("guest-waiting").classList.remove("hidden");
     try {
       await Room.connect(code, name);
       Room.send("snapshot-request", {});
     } catch (err) {
-      document.getElementById("guest-waiting").textContent = "Erreur : " + err.message;
+      document.getElementById("guest-waiting").textContent = t("game.room.joinError", { msg: err.message });
     }
   });
 }
@@ -394,8 +405,8 @@ function updateRoomUI() {
   const isController = Room.isController();
   document.getElementById("room-status").textContent = Room.active
     ? isController
-      ? " — vous avez le contrôle"
-      : " — vous regardez"
+      ? t("game.room.controller")
+      : t("game.room.watching")
     : "";
   document
     .querySelectorAll("#ctl-first,#ctl-prev,#ctl-next,#ctl-last,#ctl-slider,#ctl-jump,#annotate-btn,.marker-btn")
@@ -416,10 +427,10 @@ function renderParticipants(list) {
       const canReclaim = !isCtrl && isSelf;
       return `
         <div class="participant-row">
-          <span>${escapeHtml(p.name)}${isSelf ? " (vous)" : ""}</span>
-          ${isCtrl ? '<span class="badge-controller">CONTRÔLE</span>' : ""}
-          ${canHandOff ? `<button data-handoff="${escapeHtml(p.id)}">Donner le contrôle</button>` : ""}
-          ${canReclaim ? `<button data-handoff="${escapeHtml(p.id)}">Reprendre le contrôle</button>` : ""}
+          <span>${escapeHtml(p.name)}${isSelf ? t("game.room.you") : ""}</span>
+          ${isCtrl ? `<span class="badge-controller">${t("game.room.controlBadge")}</span>` : ""}
+          ${canHandOff ? `<button data-handoff="${escapeHtml(p.id)}">${t("game.room.giveControl")}</button>` : ""}
+          ${canReclaim ? `<button data-handoff="${escapeHtml(p.id)}">${t("game.room.reclaimControl")}</button>` : ""}
         </div>`;
     })
     .join("");
@@ -437,7 +448,7 @@ function leaveRoom() {
   Room.leave();
   document.getElementById("room-banner").classList.add("hidden");
   updateRoomUI();
-  showToast("Vous avez quitté la salle");
+  showToast(t("game.room.left"));
 }
 
 function wireRoomHandlers() {
@@ -747,7 +758,7 @@ function handleShiftClickJump(clickEvent) {
       return;
     }
   }
-  showToast("Aucun coup à ce point avant la position actuelle", true);
+  showToast(t("game.noSuggestionBefore"), true);
 }
 
 // Échap : sort proprement de quoi que ce soit soit en cours (modal, mode
@@ -781,7 +792,7 @@ function updateMarkerToolbarUI() {
     btn.classList.toggle("active", btn.dataset.symbol === markerTool);
   });
   document.getElementById("marker-active-label").textContent = markerTool
-    ? `Cliquez sur le plateau : ${MARKER_TOOL_LABEL[markerTool]}`
+    ? t("game.symbols.active", { label: markerToolLabel(markerTool) })
     : "";
 }
 
@@ -822,7 +833,7 @@ function setMoveIndex(i) {
   document.getElementById("ctl-slider").value = i;
   const move = boardData.moves[i];
   document.getElementById("ctl-move-label").textContent =
-    i === 0 ? "Coup 0 (position initiale)" : `Coup ${i} — ${move.color === "b" ? "Noir" : "Blanc"}${move.pass ? " (passe)" : ""}`;
+    i === 0 ? t("game.moveLabelInitial") : t(move.pass ? "game.moveLabelPass" : "game.moveLabel", { n: i, color: userColorBW(move.color) });
 
   goban.draw(boardData.states[i], move, errorRingMarkers(i), suggestionMarkersFor(i), symbolMarkersFor(i));
   // Le rendu de la liste d'erreurs et de l'arbre des variantes reconstruit du DOM/SVG
@@ -844,7 +855,9 @@ function renderBranchesList() {
   el.innerHTML = atMove
     .map(
       (b) =>
-        `<span class="branch-chip" data-view="${b.id}">🌿 ${escapeHtml(b.name)} (${b.moves.length} coup${b.moves.length > 1 ? "s" : ""}) <button data-del-branch="${b.id}">✕</button></span>`
+        `<span class="branch-chip" data-view="${b.id}">${escapeHtml(
+          t("game.branches.chip", { name: b.name, n: b.moves.length, s: b.moves.length > 1 ? "s" : "" })
+        )} <button data-del-branch="${b.id}">✕</button></span>`
     )
     .join("");
   el.querySelectorAll(".branch-chip").forEach((chip) => {
@@ -1063,10 +1076,14 @@ function redrawBranchDraft() {
     : boardData.moves[branchAnchorIndex];
   const moveNumbers = branchDraftMoves.map((mv, i) => ({ row: mv.row, col: mv.col, number: i + 1 }));
   goban.draw(stones, lastMv, [], [], [], moveNumbers);
-  document.getElementById("ctl-move-label").textContent = `🌿 Séquence en cours — coup ${branchDraftMoves.length + 1} (${
-    branchNextColor === "b" ? "Noir" : "Blanc"
-  } à jouer)`;
-  document.getElementById("sequence-status").textContent = `🌿 Séquence en cours — ${branchDraftMoves.length} coup${branchDraftMoves.length > 1 ? "s" : ""} (enregistrée automatiquement)`;
+  document.getElementById("ctl-move-label").textContent = t("game.sequence.label", {
+    n: branchDraftMoves.length + 1,
+    color: userColorBW(branchNextColor),
+  });
+  document.getElementById("sequence-status").textContent = t("game.sequence.statusCount", {
+    n: branchDraftMoves.length,
+    s: branchDraftMoves.length > 1 ? "s" : "",
+  });
 }
 
 function redrawRemoteDraft() {
@@ -1077,8 +1094,11 @@ function redrawRemoteDraft() {
     : boardData.moves[remoteDraftAnchor];
   const moveNumbers = remoteDraftMoves.map((mv, i) => ({ row: mv.row, col: mv.col, number: i + 1 }));
   goban.draw(stones, lastMv, [], [], [], moveNumbers);
-  const controllerName = (lastParticipants.find((p) => p.id === Room.controllerId) || {}).name || "L'hôte";
-  document.getElementById("ctl-move-label").textContent = `🌿 ${controllerName} compose une séquence en direct… (coup ${remoteDraftMoves.length})`;
+  const controllerName = (lastParticipants.find((p) => p.id === Room.controllerId) || {}).name || t("game.branches.remoteHost");
+  document.getElementById("ctl-move-label").textContent = t("game.branches.remoteComposing", {
+    name: controllerName,
+    n: remoteDraftMoves.length,
+  });
 }
 
 function undoBranchMove() {
@@ -1110,7 +1130,7 @@ function enterBranchView(branch) {
   branchViewStates = computeBranchStates(boardData.states[branch.anchor_move_number], boardData.size, branch.moves);
   branchViewIndex = branchViewStates.length - 1;
   document.getElementById("branch-view-toolbar").classList.remove("hidden");
-  document.getElementById("branch-view-name").textContent = "🌿 " + branch.name;
+  document.getElementById("branch-view-name").textContent = t("game.branchView.name", { name: branch.name });
   renderBranchView();
 }
 
@@ -1119,7 +1139,11 @@ function renderBranchView() {
     branchViewIndex > 0 ? viewingBranch.moves[branchViewIndex - 1] : boardData.moves[viewingBranch.anchor_move_number];
   const moveNumbers = viewingBranch.moves.slice(0, branchViewIndex).map((mv, i) => ({ row: mv.row, col: mv.col, number: i + 1 }));
   goban.draw(branchViewStates[branchViewIndex], move, [], [], [], moveNumbers);
-  document.getElementById("ctl-move-label").textContent = `🌿 ${viewingBranch.name} — coup ${branchViewIndex} / ${viewingBranch.moves.length}`;
+  document.getElementById("ctl-move-label").textContent = t("game.branchView.label", {
+    name: viewingBranch.name,
+    index: branchViewIndex,
+    total: viewingBranch.moves.length,
+  });
   scheduleListRender();
 }
 
@@ -1132,7 +1156,7 @@ function exitBranchView() {
 
 async function deleteBranch(id) {
   if (!guardController()) return;
-  if (!confirm("Supprimer cette branche ?")) return;
+  if (!confirm(t("game.branches.deleteConfirm"))) return;
   if (Room.active && !Room.isOwner) {
     Room.send("intent:delete-branch", { id });
   } else {
@@ -1261,7 +1285,7 @@ function renderSuggestionChips() {
 
 function openAnnotateModal(moveNumber) {
   editingErrorId = null;
-  document.getElementById("am-title").textContent = "Annoter une erreur";
+  document.getElementById("am-title").textContent = t("game.modal.annotateTitle");
   document.getElementById("am-move-no").textContent = moveNumber;
   document.getElementById("am-category").value = categories[0] ? categories[0].id : "";
   document.getElementById("am-phase").value = suggestPhase(moveNumber);
@@ -1278,7 +1302,7 @@ function openAnnotateModal(moveNumber) {
 function openEditAnnotateModal(error) {
   if (!guardController()) return;
   editingErrorId = error.id;
-  document.getElementById("am-title").textContent = "Modifier l'annotation";
+  document.getElementById("am-title").textContent = t("game.modal.editTitle");
   document.getElementById("am-move-no").textContent = error.move_number;
   document.getElementById("am-category").value = error.category_id;
   document.getElementById("am-phase").value = error.phase;
@@ -1313,7 +1337,7 @@ async function saveAnnotation() {
       closeAnnotateModal();
       pendingSuggestedMoves = [];
       editingErrorId = null;
-      showToast("Envoyé à l'hôte…");
+      showToast(t("game.errors.sentToHost"));
       return;
     }
     if (wasEditing) {
@@ -1329,15 +1353,15 @@ async function saveAnnotation() {
     editingErrorId = null;
     if (boardData) setMoveIndex(currentMoveIndex);
     else renderManualErrorList();
-    showToast(wasEditing ? "Annotation modifiée" : "Erreur annotée");
+    showToast(wasEditing ? t("game.errors.updated") : t("game.errors.tagged"));
   } catch (err) {
-    document.getElementById("am-error").textContent = "Erreur : " + err.message;
+    document.getElementById("am-error").textContent = t("game.meta.error", { msg: err.message });
   }
 }
 
 async function deleteAnnotation(id) {
   if (!guardController()) return;
-  if (!confirm("Supprimer cette annotation ?")) return;
+  if (!confirm(t("game.errors.deleteConfirm"))) return;
   try {
     if (Room.active && !Room.isOwner) {
       Room.send("intent:delete-error", { id });
@@ -1348,16 +1372,16 @@ async function deleteAnnotation(id) {
     }
     if (boardData) setMoveIndex(currentMoveIndex);
     else renderManualErrorList();
-    showToast("Annotation supprimée");
+    showToast(t("game.errors.deleted"));
   } catch (err) {
-    showToast("Erreur : " + err.message, true);
+    showToast(t("game.meta.error", { msg: err.message }), true);
   }
 }
 
 function errorItemHtml(e) {
   const suggestions = e.suggested_moves || [];
-  const titleBits = [`${PHASE_LABEL[e.phase]} · ${e.severity}`];
-  if (suggestions.length) titleBits.push(`Recommandé : ${suggestions.map((p) => formatCoord(p.row, p.col)).join(", ")}`);
+  const titleBits = [`${phaseLabel(e.phase)} · ${e.severity}`];
+  if (suggestions.length) titleBits.push(t("game.errors.suggestedMoves", { list: suggestions.map((p) => formatCoord(p.row, p.col)).join(", ") }));
   if (e.note) titleBits.push(e.note);
   return `
     <div class="error-item" data-move="${e.move_number}" title="${escapeHtml(titleBits.join(" — "))}">
@@ -1397,9 +1421,7 @@ function wireErrorItemButtons(el, { withJump } = {}) {
 function renderErrorList() {
   const el = document.getElementById("error-list");
   const sorted = [...errors].sort((a, b) => a.move_number - b.move_number);
-  el.innerHTML = sorted.length
-    ? sorted.map(errorItemHtml).join("")
-    : '<p class="muted">Aucune erreur annotée pour l\'instant.</p>';
+  el.innerHTML = sorted.length ? sorted.map(errorItemHtml).join("") : `<p class="muted">${t("game.errors.empty")}</p>`;
   wireErrorItemButtons(el, { withJump: true });
 }
 
@@ -1418,8 +1440,6 @@ function setupManualErrors() {
 function renderManualErrorList() {
   const el = document.getElementById("error-list-manual");
   const sorted = [...errors].sort((a, b) => a.move_number - b.move_number);
-  el.innerHTML = sorted.length
-    ? sorted.map(errorItemHtml).join("")
-    : '<p class="muted">Aucune erreur annotée pour l\'instant.</p>';
+  el.innerHTML = sorted.length ? sorted.map(errorItemHtml).join("") : `<p class="muted">${t("game.errors.empty")}</p>`;
   wireErrorItemButtons(el);
 }

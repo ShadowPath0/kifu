@@ -9,40 +9,40 @@
 <body>
   <div id="nav-root"></div>
   <main>
-    <h1>Gestion des étiquettes</h1>
-    <p class="muted">Une étiquette sert à la fois de filtre dans le dashboard et de valeur d'annotation sur le goban.</p>
+    <h1 data-i18n="categories.title">Gestion des étiquettes</h1>
+    <p class="muted" data-i18n="categories.intro">Une étiquette sert à la fois de filtre dans le dashboard et de valeur d'annotation sur le goban.</p>
 
     <div class="panel">
-      <h2>Nouvelle étiquette</h2>
+      <h2 data-i18n="categories.new">Nouvelle étiquette</h2>
       <div class="field-row">
         <div>
-          <label for="new-name">Nom</label>
-          <input id="new-name" type="text" placeholder="ex : Erreur de direction" />
+          <label for="new-name" data-i18n="categories.name">Nom</label>
+          <input id="new-name" type="text" placeholder="ex : Erreur de direction" data-i18n-placeholder="categories.namePlaceholder" />
         </div>
         <div>
-          <label for="new-color">Couleur</label>
+          <label for="new-color" data-i18n="categories.color">Couleur</label>
           <input id="new-color" type="color" value="#6366f1" style="height:38px;padding:2px;" />
         </div>
       </div>
       <div class="modal-actions" style="justify-content:flex-start;margin-top:14px;">
-        <button class="primary" id="add-btn">Ajouter</button>
+        <button class="primary" id="add-btn" data-i18n="categories.add">Ajouter</button>
       </div>
       <div id="form-error" class="error-msg"></div>
     </div>
 
     <div class="panel">
-      <h2>Étiquettes existantes</h2>
+      <h2 data-i18n="categories.existing">Étiquettes existantes</h2>
       <table>
-        <thead><tr><th>Couleur</th><th>Nom</th><th>Type</th><th></th></tr></thead>
+        <thead><tr><th data-i18n="categories.col.color">Couleur</th><th data-i18n="categories.col.name">Nom</th><th data-i18n="categories.col.type">Type</th><th></th></tr></thead>
         <tbody id="cat-tbody"></tbody>
       </table>
     </div>
   </main>
 
-  <script src="js/sgf.js?v=20"></script>
-  <script src="js/api.js?v=20"></script>
-  <script src="js/i18n.js?v=20"></script>
-  <script src="js/nav.js?v=20"></script>
-  <script src="js/categories.js?v=20"></script>
+  <script src="js/sgf.js?v=21"></script>
+  <script src="js/api.js?v=21"></script>
+  <script src="js/i18n.js?v=21"></script>
+  <script src="js/nav.js?v=21"></script>
+  <script src="js/categories.js?v=21"></script>
 </body>
 </html>

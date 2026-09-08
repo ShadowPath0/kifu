@@ -66,9 +66,10 @@ function shiftPeriod(dir) {
 }
 
 function formatRangeLabel(range) {
-  const fmt = (d) => d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
-  if (periodType === "week") return `Semaine du ${fmt(range.start)} au ${fmt(range.end)}`;
-  return anchorDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const locale = getLang() === "en" ? "en-US" : "fr-FR";
+  const fmt = (d) => d.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
+  if (periodType === "week") return t("reports.weekLabel", { start: fmt(range.start), end: fmt(range.end) });
+  return anchorDate.toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
 async function render() {
@@ -125,13 +126,15 @@ function renderReportHtml(range, report, prevReport, categories) {
   const catName = (id) => (categories.find((c) => c.id === id) || {}).name || "?";
 
   const rankLine = report.rankEnd
-    ? `${report.rankEnd.rank}${report.rankStart && report.rankStart.rank !== report.rankEnd.rank ? ` (depuis ${report.rankStart.rank})` : ""}`
-    : "non renseigné";
+    ? `${report.rankEnd.rank}${
+        report.rankStart && report.rankStart.rank !== report.rankEnd.rank ? t("reports.rankSince", { rank: report.rankStart.rank }) : ""
+      }`
+    : t("reports.rankUnknown");
 
   const top3 = report.top.slice(0, 3);
   const top3Html = top3.length
-    ? `<ol>${top3.map(([id, count]) => `<li>${escapeHtml(catName(id))} — ${count} occurrence(s)</li>`).join("")}</ol>`
-    : "<p class=\"muted\">Aucune erreur annotée sur cette période.</p>";
+    ? `<ol>${top3.map(([id, count]) => `<li>${escapeHtml(t("reports.top3.occurrences", { name: catName(id), count }))}</li>`).join("")}</ol>`
+    : `<p class="muted">${t("reports.top3.empty")}</p>`;
 
   const allCatIds = new Set([...report.counts.keys(), ...prevReport.counts.keys()]);
   const comparisonRows = [...allCatIds]
@@ -144,58 +147,60 @@ function renderReportHtml(range, report, prevReport, categories) {
     .sort((a, b) => b.cur - a.cur);
 
   const comparisonHtml = comparisonRows.length
-    ? `<table><thead><tr><th>Catégorie</th><th>Cette période</th><th>Période précédente</th><th>Évolution</th></tr></thead><tbody>${comparisonRows
+    ? `<table><thead><tr><th>${t("reports.compare.category")}</th><th>${t("reports.compare.current")}</th><th>${t(
+        "reports.compare.previous"
+      )}</th><th>${t("reports.compare.evolution")}</th></tr></thead><tbody>${comparisonRows
         .map((r) => {
           const arrow = r.delta > 0 ? `▲ +${r.delta}` : r.delta < 0 ? `▼ ${r.delta}` : "= 0";
           const color = r.delta > 0 ? "var(--sev-critique)" : r.delta < 0 ? "var(--sev-mineure)" : "var(--ink-soft)";
           return `<tr><td>${escapeHtml(catName(r.id))}</td><td>${r.cur}</td><td>${r.prev}</td><td style="color:${color};font-weight:600;">${arrow}</td></tr>`;
         })
         .join("")}</tbody></table>`
-    : '<p class="muted">Pas de données comparables sur la période précédente.</p>';
+    : `<p class="muted">${t("reports.compare.empty")}</p>`;
 
   const synthesis = buildSynthesis(report, prevReport, catName);
 
   return `
     <div class="stat-cards">
-      <div class="stat-card"><div class="value">${report.games.length}</div><div class="label">Parties jouées</div></div>
-      <div class="stat-card"><div class="value">${report.errorCount}</div><div class="label">Erreurs annotées</div></div>
-      <div class="stat-card"><div class="value">${report.bySeverity.critique}</div><div class="label">dont critiques</div></div>
-      <div class="stat-card"><div class="value" style="font-size:1.2rem;">${escapeHtml(rankLine)}</div><div class="label">Rang</div></div>
+      <div class="stat-card"><div class="value">${report.games.length}</div><div class="label">${t("reports.stat.games")}</div></div>
+      <div class="stat-card"><div class="value">${report.errorCount}</div><div class="label">${t("reports.stat.errors")}</div></div>
+      <div class="stat-card"><div class="value">${report.bySeverity.critique}</div><div class="label">${t("reports.stat.critical")}</div></div>
+      <div class="stat-card"><div class="value" style="font-size:1.2rem;">${escapeHtml(rankLine)}</div><div class="label">${t("reports.stat.rank")}</div></div>
     </div>
 
-    <h3>Synthèse</h3>
+    <h3>${t("reports.synthesis.title")}</h3>
     <p>${escapeHtml(synthesis)}</p>
 
-    <h3>Top 3 erreurs récurrentes</h3>
+    <h3>${t("reports.top3.title")}</h3>
     ${top3Html}
 
-    <h3>Comparaison vs période précédente</h3>
+    <h3>${t("reports.compare.title")}</h3>
     ${comparisonHtml}
 
-    <h3>Parties de la période</h3>
+    <h3>${t("reports.games.title")}</h3>
     ${
       report.games.length
         ? `<ul>${report.games
-            .map((g) => `<li>${escapeHtml(g.date_played)} — ${escapeHtml(g.title)} (${g.error_count} erreur(s))</li>`)
+            .map((g) => `<li>${escapeHtml(t("reports.games.row", { date: g.date_played, title: g.title, count: g.error_count }))}</li>`)
             .join("")}</ul>`
-        : '<p class="muted">Aucune partie jouée sur cette période.</p>'
+        : `<p class="muted">${t("reports.games.empty")}</p>`
     }
   `;
 }
 
 function buildSynthesis(report, prevReport, catName) {
   if (!report.games.length) {
-    return "Aucune partie jouée sur cette période.";
+    return t("reports.synth.none");
   }
-  const bits = [`${report.games.length} partie(s) jouée(s), ${report.errorCount} erreur(s) annotée(s)`];
+  const bits = [t("reports.synth.base", { n: report.games.length, count: report.errorCount })];
   if (report.top.length) {
-    bits.push(`l'erreur la plus fréquente reste « ${catName(report.top[0][0])} » (${report.top[0][1]} fois)`);
+    bits.push(t("reports.synth.topError", { name: catName(report.top[0][0]), count: report.top[0][1] }));
   }
   const delta = report.errorCount - prevReport.errorCount;
   if (prevReport.games.length) {
-    if (delta > 0) bits.push(`c'est plus d'erreurs que la période précédente (+${delta})`);
-    else if (delta < 0) bits.push(`c'est moins d'erreurs que la période précédente (${delta})`);
-    else bits.push("stable par rapport à la période précédente");
+    if (delta > 0) bits.push(t("reports.synth.more", { delta }));
+    else if (delta < 0) bits.push(t("reports.synth.less", { delta }));
+    else bits.push(t("reports.synth.stable"));
   }
   return bits.join(", ") + ".";
 }
@@ -207,22 +212,22 @@ function exportMarkdown() {
   const catName = (id) => (categories.find((c) => c.id === id) || {}).name || "?";
   const label = formatRangeLabel(range);
 
-  let md = `# Rapport Kifu — ${label}\n\n`;
-  md += `- Parties jouées : ${report.games.length}\n`;
-  md += `- Erreurs annotées : ${report.errorCount} (dont ${report.bySeverity.critique} critiques)\n`;
-  md += `- Rang : ${report.rankEnd ? report.rankEnd.rank : "non renseigné"}\n\n`;
-  md += `## Synthèse\n\n${buildSynthesis(report, prevReport, catName)}\n\n`;
-  md += `## Top 3 erreurs récurrentes\n\n`;
+  let md = `# Kifu — ${t("reports.title")} — ${label}\n\n`;
+  md += `- ${t("reports.stat.games")}: ${report.games.length}\n`;
+  md += `- ${t("reports.stat.errors")}: ${report.errorCount} (${report.bySeverity.critique} ${t("reports.stat.critical")})\n`;
+  md += `- ${t("reports.stat.rank")}: ${report.rankEnd ? report.rankEnd.rank : t("reports.rankUnknown")}\n\n`;
+  md += `## ${t("reports.synthesis.title")}\n\n${buildSynthesis(report, prevReport, catName)}\n\n`;
+  md += `## ${t("reports.top3.title")}\n\n`;
   if (report.top.length) {
     report.top.slice(0, 3).forEach(([id, count], i) => {
-      md += `${i + 1}. ${catName(id)} — ${count} occurrence(s)\n`;
+      md += `${i + 1}. ${t("reports.top3.occurrences", { name: catName(id), count })}\n`;
     });
   } else {
-    md += "Aucune erreur annotée.\n";
+    md += `${t("reports.top3.empty")}\n`;
   }
-  md += `\n## Parties\n\n`;
+  md += `\n## ${t("reports.games.title")}\n\n`;
   for (const g of report.games) {
-    md += `- ${g.date_played} — ${g.title} (${g.error_count} erreur(s))\n`;
+    md += `- ${t("reports.games.row", { date: g.date_played, title: g.title, count: g.error_count })}\n`;
   }
 
   const blob = new Blob([md], { type: "text/markdown" });

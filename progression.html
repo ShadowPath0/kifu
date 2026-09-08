@@ -9,39 +9,39 @@
 <body>
   <div id="nav-root"></div>
   <main>
-    <h1>Progression</h1>
-    <p class="muted">Le rang seul est un indicateur bruité. Il est présenté ici à côté du taux d'erreurs critiques par partie — c'est la corrélation entre les deux qui est actionnable, pas le rang isolément.</p>
+    <h1 data-i18n="progression.title">Progression</h1>
+    <p class="muted" data-i18n="progression.intro">Le rang seul est un indicateur bruité. Il est présenté ici à côté du taux d'erreurs critiques par partie — c'est la corrélation entre les deux qui est actionnable, pas le rang isolément.</p>
 
     <div class="panel">
-      <h2>Rang & erreurs critiques dans le temps</h2>
+      <h2 data-i18n="progression.chart.title">Rang & erreurs critiques dans le temps</h2>
       <div id="progression-chart" class="svg-chart-wrap"></div>
-      <p id="progression-empty" class="muted hidden">Pas encore assez de données (parties datées + historique de rang) pour tracer un graphique.</p>
+      <p id="progression-empty" class="muted hidden" data-i18n="progression.chart.empty">Pas encore assez de données (parties datées + historique de rang) pour tracer un graphique.</p>
     </div>
 
     <div class="panel">
-      <h2>Ajouter une entrée de rang manuelle</h2>
+      <h2 data-i18n="progression.addRank.title">Ajouter une entrée de rang manuelle</h2>
       <div class="field-row" style="align-items:flex-end;">
-        <div><label>Date</label><input id="rank-date" type="date" /></div>
-        <div><label>Rang</label><input id="rank-value" type="text" placeholder="ex : 1d, 5k" /></div>
+        <div><label data-i18n="progression.addRank.date">Date</label><input id="rank-date" type="date" /></div>
+        <div><label data-i18n="progression.addRank.rank">Rang</label><input id="rank-value" type="text" placeholder="ex : 1d, 5k" data-i18n-placeholder="progression.addRank.rankPlaceholder" /></div>
       </div>
       <div class="modal-actions" style="justify-content:flex-start;">
-        <button class="primary" id="rank-add-btn">Ajouter</button>
+        <button class="primary" id="rank-add-btn" data-i18n="progression.addRank.add">Ajouter</button>
       </div>
       <div id="rank-error" class="error-msg"></div>
     </div>
 
     <div class="panel">
-      <h2>Erreurs persistantes</h2>
-      <p class="muted">Catégories toujours en tête du Pareto sur les 3 dernières périodes malgré le temps écoulé.</p>
+      <h2 data-i18n="progression.persist.title">Erreurs persistantes</h2>
+      <p class="muted" data-i18n="progression.persist.intro">Catégories toujours en tête du Pareto sur les 3 dernières périodes malgré le temps écoulé.</p>
       <div id="persist-table"></div>
-      <p id="persist-empty" class="muted hidden">Pas assez de parties annotées pour calculer une tendance sur 3 périodes (il en faut au moins 6).</p>
+      <p id="persist-empty" class="muted hidden" data-i18n="progression.persist.empty">Pas assez de parties annotées pour calculer une tendance sur 3 périodes (il en faut au moins 6).</p>
     </div>
   </main>
 
-  <script src="js/sgf.js?v=20"></script>
-  <script src="js/api.js?v=20"></script>
-  <script src="js/i18n.js?v=20"></script>
-  <script src="js/nav.js?v=20"></script>
-  <script src="js/progression.js?v=20"></script>
+  <script src="js/sgf.js?v=21"></script>
+  <script src="js/api.js?v=21"></script>
+  <script src="js/i18n.js?v=21"></script>
+  <script src="js/nav.js?v=21"></script>
+  <script src="js/progression.js?v=21"></script>
 </body>
 </html>

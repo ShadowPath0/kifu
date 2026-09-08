@@ -9,43 +9,43 @@
 <body>
   <div id="nav-root"></div>
   <main>
-    <h1>Sauvegarde de vos données</h1>
-    <p class="muted">Toutes vos données (parties, annotations, étiquettes, historique de rang) sont stockées uniquement dans ce navigateur, sur cette machine. Il n'y a pas de synchronisation automatique : pensez à exporter régulièrement, et avant de vider le cache du navigateur.</p>
+    <h1 data-i18n="data.title">Sauvegarde de vos données</h1>
+    <p class="muted" data-i18n="data.intro">Toutes vos données (parties, annotations, étiquettes, historique de rang) sont stockées uniquement dans ce navigateur, sur cette machine. Il n'y a pas de synchronisation automatique : pensez à exporter régulièrement, et avant de vider le cache du navigateur.</p>
 
     <div class="panel">
-      <h2>Exporter</h2>
-      <p class="muted">Télécharge un fichier <code>.json</code> contenant l'intégralité de vos données.</p>
+      <h2 data-i18n="data.export.title">Exporter</h2>
+      <p class="muted" data-i18n="data.export.desc">Télécharge un fichier <code>.json</code> contenant l'intégralité de vos données.</p>
       <div id="export-stats" class="muted" style="margin-bottom:12px;"></div>
-      <button class="primary" id="export-btn">⬇ Exporter mes données</button>
+      <button class="primary" id="export-btn" data-i18n="data.export.btn">⬇ Exporter mes données</button>
     </div>
 
     <div class="panel">
-      <h2>Importer</h2>
-      <p class="muted">Restaure des données depuis un fichier exporté précédemment.</p>
+      <h2 data-i18n="data.import.title">Importer</h2>
+      <p class="muted" data-i18n="data.import.desc">Restaure des données depuis un fichier exporté précédemment.</p>
       <div class="field-row" style="align-items:center;">
         <div>
-          <label>Mode</label>
+          <label data-i18n="data.import.mode">Mode</label>
           <select id="import-mode">
-            <option value="replace">Remplacer tout (recommandé après une restauration)</option>
-            <option value="merge">Fusionner (ajoute sans supprimer l'existant)</option>
+            <option value="replace" data-i18n="data.import.modeReplace">Remplacer tout (recommandé après une restauration)</option>
+            <option value="merge" data-i18n="data.import.modeMerge">Fusionner (ajoute sans supprimer l'existant)</option>
           </select>
         </div>
         <div>
-          <label>Fichier</label>
+          <label data-i18n="data.import.file">Fichier</label>
           <input id="import-file" type="file" accept=".json,application/json" />
         </div>
       </div>
       <div class="modal-actions" style="justify-content:flex-start;">
-        <button class="primary" id="import-btn">⬆ Importer</button>
+        <button class="primary" id="import-btn" data-i18n="data.import.btn">⬆ Importer</button>
       </div>
       <div id="import-error" class="error-msg"></div>
     </div>
   </main>
 
-  <script src="js/sgf.js?v=20"></script>
-  <script src="js/api.js?v=20"></script>
-  <script src="js/i18n.js?v=20"></script>
-  <script src="js/nav.js?v=20"></script>
-  <script src="js/data.js?v=20"></script>
+  <script src="js/sgf.js?v=21"></script>
+  <script src="js/api.js?v=21"></script>
+  <script src="js/i18n.js?v=21"></script>
+  <script src="js/nav.js?v=21"></script>
+  <script src="js/data.js?v=21"></script>
 </body>
 </html>

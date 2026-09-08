@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function refreshStats() {
   const counts = BACKUP_COLLECTIONS.map((name) => `${loadCollection(name).length} ${name}`);
-  document.getElementById("export-stats").textContent = "Contenu actuel : " + counts.join(", ");
+  document.getElementById("export-stats").textContent = t("data.export.stats", { list: counts.join(", ") });
 }
 
 function exportData() {
@@ -28,7 +28,7 @@ function exportData() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  showToast("Export lancé");
+  showToast(t("data.export.started"));
 }
 
 async function importData() {
@@ -37,7 +37,7 @@ async function importData() {
   const fileInput = document.getElementById("import-file");
   const file = fileInput.files[0];
   if (!file) {
-    errEl.textContent = "Choisissez un fichier .json";
+    errEl.textContent = t("data.import.chooseFile");
     return;
   }
   const mode = document.getElementById("import-mode").value;
@@ -46,17 +46,17 @@ async function importData() {
   try {
     parsed = JSON.parse(await file.text());
   } catch (err) {
-    errEl.textContent = "Fichier JSON invalide : " + err.message;
+    errEl.textContent = t("data.import.invalidJson", { msg: err.message });
     return;
   }
   const incoming = parsed && parsed.data ? parsed.data : parsed;
   if (!incoming || !Array.isArray(incoming.games) || !Array.isArray(incoming.categories)) {
-    errEl.textContent = "Ce fichier ne ressemble pas à une sauvegarde Kifu valide.";
+    errEl.textContent = t("data.import.invalidBackup");
     return;
   }
 
   if (mode === "replace") {
-    if (!confirm("Cela va remplacer TOUTES les données actuelles. Continuer ?")) return;
+    if (!confirm(t("data.import.replaceConfirm"))) return;
     for (const name of BACKUP_COLLECTIONS) {
       saveCollection(name, incoming[name] || []);
     }
@@ -77,7 +77,7 @@ async function importData() {
 
   refreshStats();
   fileInput.value = "";
-  showToast("Import terminé");
+  showToast(t("data.import.done"));
 }
 
 function maxId(arr) {

@@ -21,16 +21,16 @@ async function addRankEntry() {
   const date = document.getElementById("rank-date").value;
   const rank = document.getElementById("rank-value").value.trim();
   if (!date || !rank) {
-    errEl.textContent = "Date et rang requis";
+    errEl.textContent = t("progression.addRank.required");
     return;
   }
   if (rankToNumeric(rank) === null) {
-    errEl.textContent = "Format de rang invalide (ex : 1d, 5k)";
+    errEl.textContent = t("progression.addRank.invalid");
     return;
   }
   await api.createRankEntry({ date, rank });
   document.getElementById("rank-value").value = "";
-  showToast("Entrée de rang ajoutée");
+  showToast(t("progression.addRank.added"));
   refresh();
 }
 
@@ -115,8 +115,8 @@ function renderChart(rankHistory, games, allErrors) {
   }
 
   // légende
-  svg += `<text x="${margin.left}" y="14" font-size="11" fill="#6366f1">● rang</text>`;
-  svg += `<text x="${width - margin.right - 90}" y="14" font-size="11" fill="#ef4444">■ erreurs critiques / partie</text>`;
+  svg += `<text x="${margin.left}" y="14" font-size="11" fill="#6366f1">${t("progression.chart.legendRank")}</text>`;
+  svg += `<text x="${width - margin.right - 90}" y="14" font-size="11" fill="#ef4444">${t("progression.chart.legendErrors")}</text>`;
 
   svg += `</svg>`;
   container.innerHTML = svg;
@@ -159,16 +159,19 @@ function renderPersistentTable(games, allErrors) {
     .filter((id) => periodTop3[1].some(([id2]) => id2 === id) && periodTop3[2].some(([id2]) => id2 === id));
 
   if (!persistentIds.length) {
-    el.innerHTML = '<p class="muted">Aucune catégorie ne reste dans le top 3 sur les 3 périodes — bon signe.</p>';
+    el.innerHTML = `<p class="muted">${t("progression.persist.none")}</p>`;
     return;
   }
 
-  let html = '<table class="persist-table"><thead><tr><th>Catégorie</th><th>Période 1</th><th>Période 2</th><th>Période 3</th></tr></thead><tbody>';
+  let html = `<table class="persist-table"><thead><tr><th>${t("progression.persist.category")}</th><th>${t(
+    "progression.persist.period",
+    { n: 1 }
+  )}</th><th>${t("progression.persist.period", { n: 2 })}</th><th>${t("progression.persist.period", { n: 3 })}</th></tr></thead><tbody>`;
   for (const id of persistentIds) {
     html += `<tr><td>${escapeHtml(catName(id))}</td>`;
     for (const top3 of periodTop3) {
       const entry = top3.find(([cid]) => cid === id);
-      html += `<td>${entry ? entry[1] + " erreur(s)" : "—"}</td>`;
+      html += `<td>${entry ? t("progression.persist.errorCount", { n: entry[1] }) : "—"}</td>`;
     }
     html += "</tr>";
   }

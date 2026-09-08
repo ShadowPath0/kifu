@@ -9,41 +9,41 @@
 <body>
   <div id="nav-root"></div>
   <main>
-    <h1>Parties</h1>
+    <h1 data-i18n="games.title">Parties</h1>
 
     <div class="toolbar panel">
       <div class="field">
-        <label for="fl-search">Recherche</label>
-        <input id="fl-search" type="text" placeholder="titre, adversaire..." />
+        <label for="fl-search" data-i18n="games.search">Recherche</label>
+        <input id="fl-search" type="text" placeholder="titre, adversaire..." data-i18n-placeholder="games.searchPlaceholder" />
       </div>
       <div class="field">
-        <label for="fl-color">Couleur jouée</label>
+        <label for="fl-color" data-i18n="games.colorPlayed">Couleur jouée</label>
         <select id="fl-color">
-          <option value="">Toutes</option>
-          <option value="black">Noir</option>
-          <option value="white">Blanc</option>
+          <option value="" data-i18n="dashboard.filters.colorAll">Toutes</option>
+          <option value="black" data-i18n="dashboard.filters.colorBlack">Noir</option>
+          <option value="white" data-i18n="dashboard.filters.colorWhite">Blanc</option>
         </select>
       </div>
       <div class="field">
-        <label for="fl-platform">Plateforme</label>
-        <input id="fl-platform" type="text" placeholder="ex : KGS" />
+        <label for="fl-platform" data-i18n="games.platform">Plateforme</label>
+        <input id="fl-platform" type="text" placeholder="ex : KGS" data-i18n-placeholder="dashboard.filters.platformPlaceholder" />
       </div>
       <div class="field">
-        <label for="fl-date-from">Du</label>
+        <label for="fl-date-from" data-i18n="games.from">Du</label>
         <input id="fl-date-from" type="date" />
       </div>
       <div class="field">
-        <label for="fl-date-to">Au</label>
+        <label for="fl-date-to" data-i18n="games.to">Au</label>
         <input id="fl-date-to" type="date" />
       </div>
       <div class="field">
-        <button id="fl-apply" class="primary">Filtrer</button>
+        <button id="fl-apply" class="primary" data-i18n="games.apply">Filtrer</button>
       </div>
       <div class="field">
-        <button id="fl-reset">Réinitialiser</button>
+        <button id="fl-reset" data-i18n="games.reset">Réinitialiser</button>
       </div>
       <div class="field" style="margin-left:auto;">
-        <a class="btn primary" style="text-decoration:none;display:inline-block;" href="import.html">+ Importer une partie</a>
+        <a class="btn primary" style="text-decoration:none;display:inline-block;" href="import.html" data-i18n="games.import">+ Importer une partie</a>
       </div>
     </div>
 
@@ -51,25 +51,25 @@
       <table id="games-table">
         <thead>
           <tr>
-            <th data-sort="date_played">Date</th>
-            <th data-sort="opponent_name">Adversaire</th>
-            <th data-sort="opponent_rank">Rang adv.</th>
-            <th data-sort="user_color">Couleur</th>
-            <th data-sort="result">Résultat</th>
-            <th data-sort="platform">Plateforme</th>
-            <th data-sort="error_count">Erreurs taguées</th>
+            <th data-sort="date_played" data-i18n="games.col.date">Date</th>
+            <th data-sort="opponent_name" data-i18n="games.col.opponent">Adversaire</th>
+            <th data-sort="opponent_rank" data-i18n="games.col.opponentRank">Rang adv.</th>
+            <th data-sort="user_color" data-i18n="games.col.color">Couleur</th>
+            <th data-sort="result" data-i18n="games.col.result">Résultat</th>
+            <th data-sort="platform" data-i18n="games.col.platform">Plateforme</th>
+            <th data-sort="error_count" data-i18n="games.col.errors">Erreurs taguées</th>
           </tr>
         </thead>
         <tbody id="games-tbody"></tbody>
       </table>
-      <p id="empty-msg" class="muted hidden">Aucune partie ne correspond à ces filtres.</p>
+      <p id="empty-msg" class="muted hidden" data-i18n="games.empty">Aucune partie ne correspond à ces filtres.</p>
     </div>
   </main>
 
-  <script src="js/sgf.js?v=20"></script>
-  <script src="js/api.js?v=20"></script>
-  <script src="js/i18n.js?v=20"></script>
-  <script src="js/nav.js?v=20"></script>
-  <script src="js/games.js?v=20"></script>
+  <script src="js/sgf.js?v=21"></script>
+  <script src="js/api.js?v=21"></script>
+  <script src="js/i18n.js?v=21"></script>
+  <script src="js/nav.js?v=21"></script>
+  <script src="js/games.js?v=21"></script>
 </body>
 </html>

@@ -891,10 +891,17 @@ async function toggleBranchReading(id) {
   if (!guardController()) return;
   const branch = branches.find((b) => b.id === id);
   if (!branch) return;
-  const payload = { in_reading: !branch.in_reading };
+  await setBranchReading(id, !branch.in_reading, true);
+}
+
+// value=true, silent=true : utilisé quand une séquence vient d'être terminée (✓ Terminé)
+// pour l'ajouter directement à la bibliothèque de lecture, sans clic supplémentaire —
+// "enregistrer la variation" (la terminer) EST l'action qui l'envoie dans reading.
+async function setBranchReading(id, value, showToastMsg) {
+  const payload = { in_reading: value };
   if (Room.active && !Room.isOwner) {
     Room.send("intent:update-branch", { id, payload });
-    showToast(t("game.errors.sentToHost"));
+    if (showToastMsg) showToast(t("game.errors.sentToHost"));
     return;
   }
   const updated = await api.updateBranch(id, payload);
@@ -902,7 +909,7 @@ async function toggleBranchReading(id) {
   if (idx !== -1) branches[idx] = updated;
   if (Room.active) Room.send("sync:branch-updated", { branch: updated });
   renderBranchesList();
-  showToast(updated.in_reading ? t("reading.added") : t("reading.removed"));
+  if (showToastMsg) showToast(updated.in_reading ? t("reading.added") : t("reading.removed"));
 }
 
 // ---------- bibliothèque de lecture (façon Go Magic) ----------
@@ -1187,11 +1194,16 @@ function undoBranchMove() {
 function finishSequence() {
   if (branchMode !== "creating") return;
   branchMode = null;
+  const finishedId = activeBranchId;
+  const hadMoves = branchDraftMoves.length > 0;
   activeBranchId = null;
   pendingBranchSync = false;
   document.getElementById("sequence-toolbar").classList.add("hidden");
   setMoveIndex(currentMoveIndex);
   if (Room.active) Room.send("branch-draft-end", {});
+  // Terminer une séquence (au moins un coup) EST "enregistrer la variation" : elle part
+  // directement dans la bibliothèque de lecture, sans clic supplémentaire.
+  if (finishedId != null && hadMoves) setBranchReading(finishedId, true, true);
 }
 
 function enterBranchView(branch) {

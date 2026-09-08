@@ -43,4 +43,17 @@ const PRO_GAMES = [
     source: "fichier fourni par l'utilisateur",
     sgf: `(;GM[1]FF[4]CA[UTF-8]SZ[19]BR[9단]HA[0]KM[6.5]PB[목진석]PW[이창호]RE[119수 흑불계승]TM[1시간]WR[9단];B[qd];W[dp];B[pp];W[dc];B[ce];W[fd];B[di];W[oc];B[pe];W[ld];B[nq];W[qj];B[ql];W[qg];B[fq];W[cn];B[dq];W[cq];B[cr];W[br];B[dr];W[cp];B[ip];W[qn];B[qp];W[qb];B[nd];W[nc];B[og];W[rl];B[rm];W[qm];B[rk];W[pl];B[qk];W[pk];B[rj];W[qi];B[pm];W[oh];B[ng];W[on];B[om];W[nm];B[ol];W[pn];B[nl];W[oj];B[nn];W[mm];B[ml];W[no];B[mn];W[lm];B[ll];W[hp];B[hq];W[ln];B[mo];W[mp];B[lo];W[ko];B[lp];W[lq];B[kp];W[jp];B[kq];W[iq];B[km];W[ri];B[rn];W[hr];B[kn];W[go];B[fn];W[fo];B[nh];W[re];B[rd];W[qe];B[od];W[pc];B[pd];W[si];B[sl];W[rc];B[qc];W[rb];B[mc];W[md];B[lc];W[kc];B[kb];W[jc];B[nb];W[oa];B[jb];W[ic];B[ib];W[hb];B[se];W[ni];B[ob];W[pb];B[mb];W[la];B[lh];W[lf];B[ph];W[li];B[ki];W[sf];B[sd];W[pf];B[me];W[le];B[rf];W[mi];B[lg])`,
   },
+  {
+    id: "yi-changho-kim-suchang-2025",
+    title: "Yi Ch'ang-ho vs Kim Su-chang — 2025 Legends League, playoffs (2e tour)",
+    black: "Yi Ch'ang-ho",
+    blackRank: "9d",
+    white: "Kim Su-chang",
+    whiteRank: "9d",
+    result: "B+R",
+    date: "2025-12-01",
+    event: "2025 Legends League, Playoffs, Round 2",
+    source: "fichier fourni par l'utilisateur",
+    sgf: `(;GM[1]FF[4]CA[UTF-8]SZ[19]BR[9d]DT[2025-12-01]EV[2025 Legends League]KM[6.5]PB[Yi Ch'ang-ho]PW[Kim Su-chang]RE[B+R]RO[Playoffs, Round 2]WR[9d];B[qd];W[dd];B[pq];W[dp];B[oc];W[qo];B[qp];W[po];B[nq];W[pk];B[fc];W[ec];B[fd];W[df];B[jd];W[ph];B[ch];W[hc];B[hd];W[fb];B[gb];W[eb];B[cn];W[ck];B[gc];W[dn];B[dm];W[cm];B[do];W[en];B[co];W[eo];B[bm];W[cl];B[cp];W[dq];B[cq];W[dr];B[cr];W[eh];B[qg];W[ke];B[qh];W[kd];B[jc];W[jg];B[hg];W[bg];B[ip];W[op];B[oq];W[jo];B[io];W[in];B[hn];W[im];B[hm];W[il];B[jp];W[ko];B[fp];W[ep];B[kp];W[lo];B[el];W[ek];B[fk];W[ej];B[gl];W[fq];B[gq];W[gp];B[gr];W[go];B[fr];W[ho];B[fi];W[er];B[ei];W[di];B[fj];W[dh];B[eq];W[hq];B[hr];W[fq];B[ji];W[lp];B[lq];W[hl];B[gm];W[fo];B[np];W[bn];B[bl];W[bk];B[bo];W[ih];B[ij];W[hj];B[hk];W[ik];B[hi];W[ii];B[jj];W[gk];B[gj];W[hk];B[hh];W[lg];B[mh];W[lh];B[km];W[kl];B[li];W[ll];B[ni];W[mj];B[mi];W[nf];B[pi];W[nc];B[nn];W[nl];B[jk];W[jl];B[nd];W[md];B[mm];W[lm];B[ne];W[mb];B[nb];W[mc];B[ob];W[kc];B[qm];W[pm];B[ql];W[pl];B[qk];W[pj];B[qi];W[if];B[hf];W[ie];B[he];W[mq];B[lr];W[jr];B[ir];W[mr];B[mp];W[iq];B[kq];W[hp];B[kh];W[on];B[kg])`,
+  },
 ];

@@ -105,6 +105,18 @@ h1, h2, h3 {
   font-weight: 700;
 }
 
+.nav-toggle {
+  display: none;
+  margin-left: auto;
+  padding: 6px 10px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.nav-links {
+  display: contents;
+}
+
 main {
   max-width: 1180px;
   margin: 0 auto;
@@ -841,4 +853,139 @@ tbody tr {
   color: var(--ink-soft);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+/* ===== Mobile ===== */
+
+/* Le plateau est dessiné en interne à une résolution fixe (600x600), mais on peut le
+   redimensionner à l'affichage sans rien casser : goban.pixelToPos() convertit déjà les
+   coordonnées de clic via le ratio canvas.clientWidth, donc ça reste cliquable au bon
+   endroit même réduit en CSS. Toujours actif (pas juste en media query) : utile dès que
+   la fenêtre est plus étroite que ~650px, pas seulement sur "vrai" mobile. */
+#goban-canvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Un panel qui contient un tableau devient scrollable horizontalement au lieu de faire
+   déborder toute la page — évite de casser la mise en page sur les listes (parties,
+   étiquettes, heatmap, comparaison de rapports...) sans toucher au HTML de chaque page. */
+.panel:has(table) {
+  overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  #nav-root {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 52px;
+    padding: 8px 14px;
+    row-gap: 6px;
+  }
+
+  #nav-root .brand {
+    margin-right: 0;
+  }
+
+  .nav-toggle {
+    display: inline-flex;
+    order: 2;
+  }
+
+  .lang-switch {
+    order: 3;
+    margin-left: 8px;
+  }
+
+  .nav-links {
+    display: none;
+    order: 4;
+    width: 100%;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  #nav-root a.nav-link {
+    padding: 11px 12px;
+  }
+
+  main {
+    padding: 14px 12px 32px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  /* Formulaires deux colonnes -> une colonne, sinon champs illisibles en étroit */
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  /* 16px minimum : en dessous, Safari iOS zoome automatiquement sur le champ au focus */
+  input[type="text"],
+  input[type="date"],
+  input[type="number"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  button, .btn {
+    padding: 9px 14px;
+  }
+
+  .modal {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .goban-wrap {
+    gap: 14px;
+  }
+
+  .review-board-col {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+
+  .error-sidebar {
+    min-width: 0;
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .report-nav {
+    flex-wrap: wrap;
+  }
+
+  .stat-cards {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* En-têtes "titre + boutons d'action" côte à côte (fiche partie, parties pro...) :
+     trop serré sur petit écran, on empile. */
+  .panel-header {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .panel-header > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+  }
 }

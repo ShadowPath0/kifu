@@ -15,17 +15,27 @@ function renderNav(active) {
   const lang = getLang();
   root.innerHTML =
     `<a class="brand" href="index.html">碁 Kifu</a>` +
+    `<button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-label="Menu">☰</button>` +
+    `<div class="nav-links" id="nav-links">` +
     links
       .map(
         (l) =>
           `<a class="nav-link${l.key === active ? " active" : ""}" href="${l.href}">${l.label}</a>`
       )
       .join("") +
+    `</div>` +
     `<span class="lang-switch">` +
     `<button type="button" class="lang-btn${lang === "fr" ? " active" : ""}" data-lang="fr">FR</button>` +
     `<button type="button" class="lang-btn${lang === "en" ? " active" : ""}" data-lang="en">EN</button>` +
     `</span>`;
   root.querySelectorAll(".lang-btn").forEach((btn) => {
     btn.addEventListener("click", () => setLang(btn.dataset.lang));
+  });
+  const toggle = document.getElementById("nav-toggle");
+  const navLinks = document.getElementById("nav-links");
+  toggle.addEventListener("click", () => {
+    const isOpen = navLinks.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    toggle.textContent = isOpen ? "✕" : "☰";
   });
 }

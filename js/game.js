@@ -858,7 +858,9 @@ function renderBranchesList() {
       (b) =>
         `<span class="branch-chip" data-view="${b.id}">${escapeHtml(
           t("game.branches.chip", { name: b.name, n: b.moves.length, s: b.moves.length > 1 ? "s" : "" })
-        )} <button data-del-branch="${b.id}">✕</button></span>`
+        )} <button data-reading-branch="${b.id}" class="${b.in_reading ? "reading-on" : ""}" title="${escapeHtml(
+          b.in_reading ? t("reading.removeFromLibrary") : t("reading.addToLibrary")
+        )}">${b.in_reading ? "📚✓" : "📚"}</button> <button data-del-branch="${b.id}">✕</button></span>`
     )
     .join("");
   el.querySelectorAll(".branch-chip").forEach((chip) => {
@@ -868,6 +870,12 @@ function renderBranchesList() {
       if (branch) enterBranchView(branch);
     });
   });
+  el.querySelectorAll("button[data-reading-branch]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleBranchReading(parseInt(btn.dataset.readingBranch, 10));
+    });
+  });
   el.querySelectorAll("button[data-del-branch]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -875,6 +883,26 @@ function renderBranchesList() {
     });
   });
   renderMoveTree();
+}
+
+// Seul ce clic explicite envoie (ou retire) une variante dans la bibliothèque de lecture —
+// composer une séquence sur le plateau ne suffit pas (cf. persistActiveBranch).
+async function toggleBranchReading(id) {
+  if (!guardController()) return;
+  const branch = branches.find((b) => b.id === id);
+  if (!branch) return;
+  const payload = { in_reading: !branch.in_reading };
+  if (Room.active && !Room.isOwner) {
+    Room.send("intent:update-branch", { id, payload });
+    showToast(t("game.errors.sentToHost"));
+    return;
+  }
+  const updated = await api.updateBranch(id, payload);
+  const idx = branches.findIndex((b) => b.id === id);
+  if (idx !== -1) branches[idx] = updated;
+  if (Room.active) Room.send("sync:branch-updated", { branch: updated });
+  renderBranchesList();
+  showToast(updated.in_reading ? t("reading.added") : t("reading.removed"));
 }
 
 // ---------- bibliothèque de lecture (façon Go Magic) ----------
@@ -904,6 +932,7 @@ async function addRangeToReadingLibrary() {
     anchor_move_number: from - 1,
     moves: moves.map((m) => ({ row: m.row, col: m.col, color: m.color })),
     name: name || defaultName,
+    in_reading: true,
   };
   if (Room.active && !Room.isOwner) {
     Room.send("intent:create-branch", payload);

@@ -393,6 +393,10 @@ const api = {
       anchor_move_number: payload.anchor_move_number,
       name: payload.name || `Variante ${branches.filter((b) => b.game_id === numGameId && b.anchor_move_number === payload.anchor_move_number).length + 1}`,
       moves: payload.moves || [],
+      // Composer une séquence sur le plateau l'enregistre en brouillon (undo, sync...)
+      // mais ne l'envoie PAS dans la bibliothèque de lecture — il faut un clic explicite
+      // ("📚 Enregistrer pour la lecture" / plage de coups) pour ça.
+      in_reading: payload.in_reading === true,
       created_at: nowIso(),
     };
     branches.push(branch);

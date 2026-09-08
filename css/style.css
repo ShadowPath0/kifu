@@ -605,6 +605,17 @@ tbody tr {
   font-size: 0.8rem;
 }
 
+/* Bandeau de succès (fin de guess-the-move / entraînement reading) : couleurs liées aux
+   variables de thème, sinon le texte reste illisible en mode sombre (fond clair figé). */
+.success-box {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--green-border-soft);
+  border-radius: var(--radius);
+  background: var(--green-bg-soft);
+  color: var(--green-text);
+}
+
 /* --- Tag rapide (catégorie / sévérité, sans modal) --- */
 
 .severity-picker {
@@ -785,6 +796,15 @@ tbody tr {
   padding: 0;
   font-weight: 700;
   cursor: pointer;
+}
+
+.branch-chip button[data-reading-branch] {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.branch-chip button[data-reading-branch].reading-on {
+  color: var(--accent);
 }
 
 .marker-btn {
